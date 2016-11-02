@@ -218,7 +218,7 @@ plan_change.model = (function () {
             selected_plan = serverData.findPlan(selected_id) || serverData.getPlanList()[0];
 
         $(spa_page_transition.DATA_BIND_EVENT).trigger(plan_change.PLAN_SELECTED_EVENT, selected_plan);
-        plan_change.getLogger().debug('selectPlan executed. selected_plan', selected_plan);
+        plan_change.getLogger().debug('selectPlan executed. selected_plan', selected_plan.id);
         return selected_plan;
     };
 

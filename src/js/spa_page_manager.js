@@ -483,6 +483,7 @@ var spa_data_bind = (function () {
     'use strict';
     var
         ENUM_TOGGLE_ACTION_TYPE = {ADD: 'ADD', REMOVE: 'REMOVE', TOGGLE: 'TOGGLE'},
+        BIND_ATTR_REPLACED = 'data-bind-replaced',
         evt_data_bind_view,
         initModule;
 
@@ -500,6 +501,9 @@ var spa_data_bind = (function () {
             BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop'];
 
         init_bind_prop_map = function (key, data) {
+            $('[' + BIND_ATTR_REPLACED + ']').each( function (idx, el) {
+                $(el).remove();
+            })
             _bind_prop_map = {};
             _create_bind_prop_map(key, data);
             return this;
@@ -625,7 +629,7 @@ var spa_data_bind = (function () {
                 loop_prop_key = $(el).attr('data-bind-loop');
 
             if (loop_prop_key && loop_prop_key.indexOf(key) === 0) {
-                // prop_tree.getLogger().debug('_do_find_loop_element.loop_prop_key', loop_prop_key);
+                spa_page_transition.getLogger().debug('######_do_find_loop_element.loop_prop_key', loop_prop_key);
                 cloned_children = _clone_loop_children(el, loop_prop_key, data);
                 $.each(cloned_children, function (idx, el_cloned_child) {
                     _do_find_loop_element(el_cloned_child, data, key);
@@ -671,7 +675,7 @@ var spa_data_bind = (function () {
 
                 if (bind_attr) {
                     $el.attr(bind_attr_type, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
-                    $el.attr('replaced', true);
+                    $el.attr(BIND_ATTR_REPLACED, true);
                 }
             });
         };
@@ -765,7 +769,7 @@ var spa_data_bind = (function () {
                         }
                         if (all_props[el_prop_key]) {
                             evt_data_bind_view.settle_bind_val($this, attr, data, el_prop_key);
-                        } else {
+                        } else if (!$this.attr('data-bind-loop')) {
                             $this.hide();
                         }
                     });

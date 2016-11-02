@@ -67,6 +67,17 @@
             </ul>
         </div>
 
+        <br/>
+        選択されたプラン:
+        <span data-bind-text="plan.name"></span><br/>
+        <br/>
+        選択されたプランのデバイスリスト:
+        <select data-bind-loop="plan.devices">
+            <option data-bind-text="plan.devices.title" data-bind-val="plan.devices.id"
+                    data-bind-id="plan.devices.id"></option>
+        </select>
+        <br/>
+
         <div class="plan-change-explain-bottom">
             <p>注意事項</p>
             <div class="change-plan-warning">

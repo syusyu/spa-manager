@@ -9,7 +9,19 @@
       "price": "1,000",
       "initial_charge": "100",
       "notes_title1": "<b>Warning1</b>",
-      "notes_body1": "<b>Be be careful</b> <br />Be careful Be careful Be careful Be careful Be careful Be careful "
+      "notes_body1": "<b>Be be careful</b> <br />Be careful Be careful Be careful Be careful Be careful Be careful ",
+      "devices": [
+        {
+          "id": "d11",
+          "title": "Device title1 of plan1",
+          "body": "Divice body1 of plan1"
+        },
+        {
+          "id": "d12",
+          "title": "Device title2 of plan1",
+          "body": "Device body2 of plan1"
+        }
+      ]
     },
     {
       "id": "2",
@@ -20,7 +32,19 @@
       "notes_title1": "Warning1",
       "notes_body1": "Be careful Be careful Be careful Be careful Be careful Be careful Be careful ",
       "notes_title2": "Warning2",
-      "notes_body2": "Be careful Be careful Be careful Be careful Be careful Be careful Be careful "
+      "notes_body2": "Be careful Be careful Be careful Be careful Be careful Be careful Be careful ",
+      "devices": [
+        {
+          "id": "d21",
+          "title": "Device title1 of plan2",
+          "body": "Device body1 of plan2"
+        },
+        {
+          "id": "d22",
+          "title": "Device title2 of plan2",
+          "body": "Device body2 of plan2"
+        }
+      ]
     },
     {
       "id": "3",
@@ -33,7 +57,19 @@
       "notes_title2": "Warning2",
       "notes_body2": "Be careful Be careful Be careful Be careful Be careful Be careful Be careful ",
       "notes_title3": "Warning3",
-      "notes_body3": "Be careful Be careful Be careful Be careful Be careful Be careful Be careful "
+      "notes_body3": "Be careful Be careful Be careful Be careful Be careful Be careful Be careful ",
+      "devices": [
+        {
+          "id": "d31",
+          "title": "Device title1 of plan3",
+          "body": "Device body1 of plan3"
+        },
+        {
+          "id": "d32",
+          "title": "Device title2 of plan3",
+          "body": "Device body2 of plan3"
+        }
+      ]
     }
   ],
   "init_data": {
