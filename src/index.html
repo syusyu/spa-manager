@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service contract</title>
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/font-awesome.css"/>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="css/spa_page_manager.css"/>
+    <link rel="stylesheet" href="css/service-contract.css"/>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <h1><a href=""><img src="img/icon.png" class="logo">Change plan</a></h1>
+    </div><!-- container -->
+</div>
+
+<div id="plan-change-container" class="container">
+    マイページ > 契約 > 変更
+
+    <div class="spa-page plan-change-nowloading visible">
+        <img src="img/now_loading_plan_change.gif" alt="Now loading"/>
+        <p id="plan-change-nowloading-text">Now loading</p>
+    </div>
+
+    <div class="spa-page list">
+        <h3>プランの変更予約をする</h3>
+        <div class="plan-change-explain">
+            <p>プランを変更することができます。</p>
+            <p>お申し込み後のキャンセルはできません。事前の注意事項をご確認の上、お手続きをお願いいたします。</p>
+        </div>
+
+        <div class="box current-plan">
+            <p>契約番号： 090-XXXX-XXX1</p>
+            <p>プラン： WonderLink LITE-A ライト</p>
+        </div>
+
+        <div class="change-plan-to">
+            <!--<i class="fa fa-arrow-circle-down fa-3x"></i>-->
+            <img src="img/arrow_plan_change_to.png" class="change-plan-to-img" alt="↓"/>
+        </div>
+
+        <div class="box current-plan">
+            <p>契約番号： 090-XXXX-XXX2</p>
+            <p>プラン： WonderLink LITE-A ライト2</p>
+        </div>
+
+        <div class="change-plan-to">
+            <!--<i class="fa fa-arrow-circle-down fa-3x"></i>-->
+            <img src="img/arrow_plan_change_to.png" class="change-plan-to-img" alt="↓"/>
+        </div>
+
+        <div class="box new-plan-list">
+            <ul>
+                <li><label><input type="radio" name="newplan" id="newplan1" data-action-change-id="select-plan"
+                                  data-action-change-params="id=1" value="1"/>
+                    WonderLink LITE-A ミディアム (4G) + 500円</label></li>
+                <li><label><input type="radio" name="newplan" id="newplan2" data-action-change-id="select-plan"
+                                  data-action-change-params="id=2" value="2"/>
+                    WonderLink LITE-A スーパー (7G) + 1500円</label></li>
+                <li><label><input type="radio" name="newplan" id="newplan3" data-action-change-id="select-plan"
+                                  data-action-change-params="id=3" value="3"/>
+                    WonderLink LITE-A ウルトラ (11G) + 2500円</label></li>
+            </ul>
+        </div>
+
+        <div class="plan-change-explain-bottom">
+            <p>注意事項</p>
+            <div class="change-plan-warning">
+                <dl>
+                    <dt data-bind-html="plan.notes_title1"></dt>
+                    <dd data-bind-html="plan.notes_body1"></dd>
+                    <dt data-bind-html="plan.notes_title2"></dt>
+                    <dd data-bind-html="plan.notes_body2"></dd>
+                    <dt data-bind-html="plan.notes_title3"></dt>
+                    <dd data-bind-html="plan.notes_body3"></dd>
+                </dl>
+            </div>
+
+            <div class="change-plan-question">
+                <p>【よくあるご質問】</p>
+                <ul>
+                    <li><a href="javascript:void(0);" data-action-click-id="popup-warning">変更当月に、違うプランに変更・解約できますか？</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <a href=".#!action=cancel-init">プラン変更をキャンセル</a>
+
+        <div class="box-for-btn">
+            <a href="javascript:void(0);" data-action-click-id="next-to-confirm"
+               data-action-click-params="$name.newplan.data-action-change-params">
+                <img src="img/btn_back_off.gif" alt=""/>
+            </a>
+            <a href="javascript:void(0);" data-action-click-id="next-to-confirm"
+               data-action-click-params="$name.newplan.data-action-change-params">
+                <img src="img/btn_plan_change_confirm_off.gif" alt=""/>
+            </a>
+        </div>
+    </div>
+
+    <div class="spa-page modal-warning">
+        <div class="spa-modal">
+            <div class="spa-modal-container">
+                <div class="spa-modal-contents-title">
+                    <p class="spa-modal-contents-title-left">注意事項</p>
+                    <p class="spa-modal-close" data-action-click-id="back-to-list">×</p>
+                </div>
+                <div class="spa-modal-contents-body">
+                    <p><span data-bind-text='plan.name'></span></p>
+                    <ul>
+                        <li>プラン料金とは別に、変更手数料<span data-bind-text="init_data.change_fee" data-bind-format="number"></span>円となります。</li>
+                        <li>手数料は、新プランの利用開始月の利用料金と合わせて請求されます。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="spa-modal-overlay" data-action-click-id="back-to-list"></div>
+    </div>
+
+    <div class="spa-page confirm">
+        <h3>変更内容の確認</h3>
+        <div class="plan-change-explain">
+            <p>下記プランでお間違いない場合は、「プラン変更」を押してください。</p>
+        </div>
+        <div class="new-plan-confirm-detail">
+            <p>プラン名： <span data-bind-text='plan.name'></span></p>
+            <p>契約番号： 090-XXXX-XXX1</p>
+        </div>
+
+        <div class="plan-accordion-header" data-view-toggle-trigger="toggle-slide-next:on">
+            <span class="plan-accordion-header-title">▼変更済みプラン</span>
+        </div>
+        <div class="plan-accordion-body toggle-slide-next-target">
+            ああああああああああああああああああああああああああああああああ<br/>
+            ああああああああああああああああああああああああああああああああ<br/>
+            ああああああああああああああああああああああああああああああああ<br/>
+            ああああああああああああああああああああああああああああああああ<br/>
+        </div>
+
+        <div class="new-plan-detail">
+            <table class="new-plan-detail">
+                <tbody>
+                <tr data-bind-show-id="plan.initial_charge">
+                    <th>初期費用</th>
+                    <td><span data-bind-text='plan.initial_charge'></span>円</td>
+                </tr>
+                <tr>
+                    <th>変更手数料</th>
+                    <td><span data-bind-text='plan.price'></span>円</td>
+                </tr>
+                <tr>
+                    <th class="last">合計</th>
+                    <td class="last"><span data-bind-text='plan.price'></span>円</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="box-for-btn">
+            <a href="javascript:void(0);" data-action-click-id="back-to-list">
+                <img src="img/btn_back_off.gif" alt=""/>
+            </a>
+            <a href="javascript:void(0);" data-action-click-dbupdate-id="update">
+                <img src="img/btn_plan_change_update_off.gif" alt=""/>
+            </a>
+        </div>
+    </div>
+
+    <div class="spa-page complete">
+        <h3>変更予約が完了しました。</h3>
+        <div class="plan-change-explain">
+            変更は<span data-bind-text='init_data.service_start_req_date'></span>からの適用となります。
+        </div>
+        <div class="box-for-btn">
+            <a href="javascript:void(0);">
+                <img src="img/btn_mytop_off.gif" alt=""/>
+            </a>
+        </div>
+    </div>
+
+    <div class="spa-page cancel">
+        <h3>プラン変更をキャンセルする</h3>
+        <div class="plan-change-explain">
+            プラン変更をキャンセルします。
+        </div>
+
+        <div class="box current-plan">
+            <p>契約番号： 090-XXXX-XXX1</p>
+            <p>プラン： WonderLink LITE-A ライト2</p>
+        </div>
+
+        <div class="change-plan-to">
+            <!--<i class="fa fa-arrow-circle-down fa-3x"></i>-->
+            <img src="img/arrow_plan_change_to.png" width="30" alt=""/>
+        </div>
+
+        <div class="box new-plan-list">
+            <p>契約番号： 090-XXXX-XXX2</p>
+            <p>プラン： WonderLink LITE-A ミディアム (4G) + 500円</p>
+        </div>
+
+        <div class="plan-change-cancel-btn-area">
+            <div>
+                <label class="plan-change-cancel-check">
+                    <input type="checkbox" data-view-toggle-trigger="cancel-confirm"/>上記変更のキャンセルを行う
+                </label>
+            </div>
+            <div class="plan-change-cancel-btn-wrapper">
+                <a href="javascript:void(0);" data-action-click-id="back-to-list">
+                    <img src="img/btn_back_off.gif" alt=""/>
+                </a>
+
+                <a href="javascript:void(0);"
+                   data-action-click-dbupdate-id="cancel"
+                   class="cancel-confirm-btn-disable"
+                   data-view-toggle-class="cancel-confirm, cancel-confirm-btn-disable:inverse, cancel-confirm-btn-enable">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="spa-page cancel-complete">
+        <h3>キャンセルが完了しました。</h3>
+        <div class="box-for-btn">
+            <a href="javascript:void(0);">
+                <img src="img/btn_mytop_off.gif" alt=""/>
+            </a>
+        </div>
+    </div>
+
+    <div class="spa-page spa-error">
+        <div class="plan-change-explain">
+            エラーが発生しました。<br/>
+            お手数おかけしますが、再度ページを読み込み直してください。
+        </div>
+        <!--<div class="box" id="error-detail">-->
+        <!--<p id="error-detail-message"></p>-->
+        <!--</div>-->
+        <div class="box-for-btn">
+            <a href="javascript:void(0);">
+                <img src="img/btn_mytop_off.gif" alt=""/>
+            </a>
+        </div>
+    </div>
+
+    <input type="hidden" id="server-host" value="."/>
+    <input type="hidden" id="contract-id" value="999"/>
+    <input type="hidden" id="contract-plan-id" value="100"/>
+    <input type="hidden" name="CHECK_KEY_3510" value="csrfcheckkey3510" />
+    <input type="hidden" name="CHECK_KEY_3511" value="csrfcheckkey3511" />
+</div>
+
+
+<div class="footer">
+    <p>Copy right &copy; EC development team</p>
+</div><!-- container -->
+
+<script src="js/jquery/jquery.js"></script>
+<script src="js/jquery/jquery.uriAnchor.js"></script>
+<script src="js/bootstrap/bootstrap.min.js"></script>
+<script src="js/spa_page_manager.js"></script>
+<script src="js/service_contract_plan_change.js"></script>
+<script>
+    $(function () {
+        var is_debug_mode = true;
+        plan_change.initModule($('#plan-change-container'), $('#server-host'), {'contractId': $('#contract-id').val()}, is_debug_mode);
+        spa_page_transition.initModule($('#plan-change-container'), is_debug_mode);
+    });
+</script>
+
+</body>
+</html>
