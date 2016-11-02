@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service contract</title>
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/font-awesome.css"/>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="css/spa_page_manager.css"/>
+    <link rel="stylesheet" href="css/service-contract.css"/>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <h1><a href=""><img src="img/icon.png" class="logo">Change plan</a></h1>
+    </div><!-- container -->
+</div>
+
+<div id="plan-change-container" class="container">
+    マイページ > 契約 > 変更
+
+
+    <div class="confirm">
+        <h3>変更内容の確認</h3>
+
+        <div class="plan-accordion-header" data-view-toggle-trigger="toggle-slide-next:on">
+            <span class="plan-accordion-header-title">▼変更済みプラン</span>
+        </div>
+        <div class="plan-accordion-body toggle-slide-next-target">
+            ああああああああああああああああああああああああああああああああ<br/>
+            ああああああああああああああああああああああああああああああああ<br/>
+            ああああああああああああああああああああああああああああああああ<br/>
+            ああああああああああああああああああああああああああああああああ<br/>
+        </div>
+
+        <div>
+            <label class="plan-change-cancel-check">
+                <input type="checkbox" data-view-toggle-trigger="cancel-confirm"/>上記変更のキャンセルを行う
+            </label>
+        </div>
+        <div class="plan-change-cancel-btn-wrapper">
+            <a href="javascript:void(0);" data-action-click-id="back-to-list">
+                <img src="img/btn_back_off.gif" alt=""/>
+            </a>
+
+            <a href="javascript:void(0);"
+               data-action-click-dbupdate-id="cancel"
+               class="cancel-confirm-btn-disable"
+               data-view-toggle-class="cancel-confirm, cancel-confirm-btn-disable:inverse, cancel-confirm-btn-enable">
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="footer">
+    <p>Copy right &copy; EC development team</p>
+</div><!-- container -->
+
+<script src="js/jquery/jquery.js"></script>
+<script src="js/bootstrap/bootstrap.min.js"></script>
+<script src="js/spa_page_manager.js"></script>
+<script>
+    $(function () {
+        spa_data_bind.initModule();
+    });
+</script>
+
+</body>
+</html>

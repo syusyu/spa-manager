@@ -248,10 +248,8 @@ spa_page_transition.shell = (function () {
         });
 
         $.when(dfdActivation).then(function (data) {
-            spa_page_transition.getLogger().debug('SPA starts. model availability is ' + spa_page_transition.model.isModelAvailable());
-            if (spa_page_transition.model.isModelAvailable()) {
-                $(window).trigger('hashchange');
-            }
+            spa_page_transition.getLogger().debug('SPA starts.');
+            $(window).trigger('hashchange');
         })
     };
 
@@ -268,7 +266,6 @@ spa_page_transition.shell = (function () {
 spa_page_transition.model = (function () {
     'use strict';
     var
-        isModelAvailable,
         actionProto, actionFactory,
         addAction, findAction, execAction,
         initModule,
@@ -353,20 +350,12 @@ spa_page_transition.model = (function () {
         actionList.push(actionFactory(action_id, next_page_cls, main_proc, pre_proc));
     };
 
-    isModelAvailable = function () {
-        return actionList && actionList.length > 0;
-    };
-
     initModule = function () {
-        if (!isModelAvailable()) {
-            console.warn('actionList is set so spa_page_transition.MODEL feature is NOT available.')
-        }
     };
 
     return {
         addAction: addAction,
         execAction: execAction,
-        isModelAvailable: isModelAvailable,
         initModule: initModule,
     };
 }());
@@ -629,7 +618,6 @@ var spa_data_bind = (function () {
                 loop_prop_key = $(el).attr('data-bind-loop');
 
             if (loop_prop_key && loop_prop_key.indexOf(key) === 0) {
-                spa_page_transition.getLogger().debug('######_do_find_loop_element.loop_prop_key', loop_prop_key);
                 cloned_children = _clone_loop_children(el, loop_prop_key, data);
                 $.each(cloned_children, function (idx, el_cloned_child) {
                     _do_find_loop_element(el_cloned_child, data, key);
