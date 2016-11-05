@@ -798,13 +798,13 @@ var spa_data_bind = (function () {
             });
         });
 
-        $('*[data-view-toggle-trigger]').on('click', function (e_toggle) {
+        $('[data-view-toggle-trigger]').on('click', function (e_toggle) {
             var
                 trigger_key = $(this).attr('data-view-toggle-trigger'),
                 has_trigger_status = $(this).prop('type') === 'checkbox' || $(this).prop('type') === 'radio',
                 trigger_status_on = has_trigger_status && ($(this).prop('checked') || $(this).prop('selected'));
 
-            $('*[data-view-toggle-class]').each(function (idx, el) {
+            $('[data-view-toggle-class]').each(function (idx, el) {
                 var
                     toggle_class_list,
                     data_bind_toggle_attr = $(this).attr('data-view-toggle-class');
@@ -828,7 +828,7 @@ var spa_data_bind = (function () {
             }
         });
 
-        $('*[data-view-toggle-trigger="toggle-slide-next:on"]').trigger('click');
+        $('[data-view-toggle-trigger="toggle-slide-next:on"]').trigger('click');
     };
 
     return {
