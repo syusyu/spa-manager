@@ -490,7 +490,7 @@ var spa_data_bind = (function () {
             BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop'];
 
         init_bind_prop_map = function (key, data) {
-            $('[' + BIND_ATTR_REPLACED + ']').each( function (idx, el) {
+            $('[' + BIND_ATTR_REPLACED + ']').each(function (idx, el) {
                 $(el).remove();
             })
             _bind_prop_map = {};
@@ -836,5 +836,140 @@ var spa_data_bind = (function () {
         initModule: initModule,
         //VisibleForTesting
         ENUM_TOGGLE_ACTION_TYPE: ENUM_TOGGLE_ACTION_TYPE,
+    }
+})();
+
+
+var spa_page_transition2 = (function () {
+    'use strict';
+    var
+        addAction, initModule,
+        createFunc, setMainFunc;
+
+    addAction = function (action_id, func_list) {
+        return spa_page_transition2.model.addAction(action_id, func_list);
+    };
+    createFunc = function (trigger_keys) {
+        return spa_function.createFunc.apply(this, arguments);
+    };
+    setMainFunc = function (_main_func) {
+        return spa_function.setMainFunc(_main_func);
+    };
+    initModule = function () {
+        spa_page_transition2.model.initModule();
+    };
+
+    return {
+        addAction: addAction,
+        createFunc: createFunc,
+        setMainFunc: setMainFunc,
+        initModule: initModule,
+    }
+})();
+
+spa_page_transition2.shell = (function () {
+    'use strict';
+    var
+        addAction, initModule
+        ;
+    initModule = function () {
+    };
+    return {
+        initModule: initModule,
+    }
+})();
+
+spa_page_transition2.model = (function () {
+    'use strict';
+    var
+        addAction, protoAction,
+        initializeFunc, setInitializeFunc,
+        actionList = [],
+
+        initModule;
+
+    initModule = function () {
+        $.each(Object.keys(spa_page_transition.DATA_BIND_EVENT), function (idx_evt, key) {
+            $(spa_page_transition.DATA_BIND_EVENT).on(key, function (e, data) {
+                console.log('trans2.event.key=' + key + ', data=' + data);
+            });
+        });
+    };
+
+    protoAction = {};
+
+    addAction = function (action_id, func_list) {
+        var
+            action = Object.create(protoAction);
+
+        action.actionId = action_id;
+        action.funcList = func_list;
+        actionList.push(action);
+        return this;
+    };
+
+    var execFunc = function (action_id) {
+        $.each(actionList, function (action_idx, action) {
+            if (action_id === action.actionId) {
+                $.each(action.funcList, function (func_idx, func) {
+                    func.execute();
+                });
+            }
+        });
+    };
+    return {
+        initModule: initModule,
+        addAction: addAction,
+
+        execFunc: execFunc
+    }
+})();
+
+var spa_function = (function () {
+    'use strict';
+    var
+        protoFunc, protoDfdFunc,
+        createFunc, createDfdFunc;
+
+
+    protoFunc = {
+        async: true,
+        execute: function () {
+            this.main_func(this);
+        },
+        trigger: function (key, val) {
+            if (!(key in spa_page_transition.DATA_BIND_EVENT)) {
+                throw new Error('No trigger key is found. key = ' + key + ', all events=' + Object.keys(spa_page_transition.DATA_BIND_EVENT));
+            }
+            $(spa_page_transition.DATA_BIND_EVENT).trigger(key, val);
+            return this;
+        },
+        setMainFunc: function (_main_func) {
+            this.main_func = _main_func;
+            return this;
+        },
+    };
+
+    protoDfdFunc = {
+        async: true,
+
+    };
+
+    createFunc = function (trigger_keys) {
+        var
+            i, trigger_key,
+            len = arguments.length;
+
+        for (i = 0; i < len; i++) {
+            trigger_key = arguments[i];
+            if (trigger_key) {
+                spa_page_transition.addEvent(trigger_key);
+            }
+        }
+        return Object.create(protoFunc);
+    };
+
+    return {
+        createFunc: createFunc,
     }
 })();
