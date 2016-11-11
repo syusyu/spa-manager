@@ -843,8 +843,14 @@ var spa_data_bind = (function () {
 var spa_page_transition2 = (function () {
     'use strict';
     var
-        addAction, initModule,
+        addAction, initModule, spaLogger, getLogger,
         createFunc, setMainFunc;
+
+
+    spaLogger = spa_log.createLogger(true, 'SPA2 ');
+    getLogger = function () {
+        return spaLogger;
+    };
 
     addAction = function (action_id, func_list) {
         return spa_page_transition2.model.addAction(action_id, func_list);
@@ -860,6 +866,7 @@ var spa_page_transition2 = (function () {
     };
 
     return {
+        getLogger: getLogger,
         addAction: addAction,
         createFunc: createFunc,
         setMainFunc: setMainFunc,
@@ -870,19 +877,38 @@ var spa_page_transition2 = (function () {
 spa_page_transition2.shell = (function () {
     'use strict';
     var
-        addAction, initModule
-        ;
-    initModule = function () {
+        execAction, renderPage, renderErrorPage;
+
+    execAction = function (anchor_map) {
+        spa_page_transition2.getLogger().debug('anchor_map', anchor_map);
+        spa_page_transition2.model.execAction(anchor_map).then(function (data) {
+            renderPage(data);
+        }, function (data) {
+            if (data.stays) {
+                return;
+            } else {
+                renderErrorPage(data.callback_data);
+            }
+        });
     };
+
+    renderPage = function (data) {
+        alert('Page rendered!')
+    };
+
+    renderErrorPage = function (data) {
+        alert('Error page rendered!')
+    };
+
     return {
-        initModule: initModule,
+        execAction: execAction,
     }
 })();
 
 spa_page_transition2.model = (function () {
     'use strict';
     var
-        addAction, protoAction,
+        addAction, protoAction, execAction, execFunc,
         initializeFunc, setInitializeFunc,
         actionList = [],
 
@@ -908,22 +934,48 @@ spa_page_transition2.model = (function () {
         return this;
     };
 
-    var execFunc = function (action_id) {
-        $.each(actionList, function (action_idx, action) {
-            if (action_id === action.actionId) {
-                $.each(action.funcList, function (func_idx, func) {
-                    func.execute();
-                });
-            }
-        });
+    execAction = function (action_id) {
+        var
+            i = 0,
+            promise = $.Deferred().resolve().promise(),
+            action = findAction(action_id);
+
+        spa_page_transition2.getLogger().debug('execAction.action_id', action.actionId);
+        execFunc(action.funcList, promise, i);
+        return promise;
     };
+
+    execFunc = function (func_list, promise, idx) {
+        spa_page_transition2.getLogger().debug('execFunc.idx', idx, 'len', func_list.length);
+        promise = promise.then(function (data) {
+            func_list[idx].execute();
+        }, function (data) {
+            spa_page_transition2.getLogger().debug('execFunc.failed.data', data);
+        });
+        if (++idx < func_list.length) {
+            spa_page_transition2.getLogger().debug('execFunc.idx++', idx, 'len', func_list.length);
+            execFunc(func_list, promise, idx);
+        }
+    }
+    ;
+
+    var findAction = function (action_id) {
+        var i;
+        spa_page_transition2.getLogger().debug('findAction', action_id);
+        for (i = 0; i < actionList.length; i++) {
+            if (action_id === actionList[i].actionId) {
+                return actionList[i];
+            }
+        }
+    };
+
     return {
         initModule: initModule,
         addAction: addAction,
-
-        execFunc: execFunc
+        execAction: execAction,
     }
-})();
+})
+();
 
 var spa_function = (function () {
     'use strict';
@@ -931,11 +983,29 @@ var spa_function = (function () {
         protoFunc, protoDfdFunc,
         createFunc, createDfdFunc;
 
-
     protoFunc = {
         async: true,
         execute: function () {
-            this.main_func(this);
+            var d = $.Deferred();
+            try {
+                this.main_func(this);
+            } catch (e) {
+                console.warn(e);
+                d.reject();
+                spa_page_transition2.getLogger().debug('execute.rejected!!!!');
+            }
+            if (this.stays) {
+                spa_page_transition2.getLogger().debug('execute.rejected!');
+                d.reject({'stays': this.stays});
+            } else {
+                d.resolve();
+            }
+            return d.promise();
+        },
+        fail: function (error) {
+        },
+        stay: function () {
+            this.stays = true;
         },
         trigger: function (key, val) {
             if (!(key in spa_page_transition.DATA_BIND_EVENT)) {
@@ -948,11 +1018,6 @@ var spa_function = (function () {
             this.main_func = _main_func;
             return this;
         },
-    };
-
-    protoDfdFunc = {
-        async: true,
-
     };
 
     createFunc = function (trigger_keys) {
@@ -969,7 +1034,31 @@ var spa_function = (function () {
         return Object.create(protoFunc);
     };
 
+    createDfdFunc = function (trigger_keys) {
+        var
+            res = createFunc.apply(this, arguments);
+
+        res.execute = function () {
+            return spa_page_data.serverAccessor(this.path, this.params).done(function (data) {
+                this.main_func(this, data);
+            });
+        };
+
+        res.prototype.path = function (_path) {
+            this.path = _path;
+            return this;
+        };
+
+        res.prototype.params = function (_params) {
+            this.params = _params;
+            return this;
+        };
+
+        return res;
+    };
+
     return {
         createFunc: createFunc,
+        createDfdFunc: createDfdFunc,
     }
 })();
