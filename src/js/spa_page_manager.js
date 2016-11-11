@@ -844,7 +844,7 @@ var spa_page_transition2 = (function () {
     'use strict';
     var
         addAction, initModule, spaLogger, getLogger,
-        createFunc, setMainFunc;
+        createFunc, createDfdFunc, setMainFunc;
 
 
     spaLogger = spa_log.createLogger(true, 'SPA2 ');
@@ -858,6 +858,9 @@ var spa_page_transition2 = (function () {
     createFunc = function (trigger_keys) {
         return spa_function.createFunc.apply(this, arguments);
     };
+    createDfdFunc = function (trigger_keys) {
+        return spa_function.createDfdFunc.apply(this, arguments);
+    };
     setMainFunc = function (_main_func) {
         return spa_function.setMainFunc(_main_func);
     };
@@ -869,6 +872,7 @@ var spa_page_transition2 = (function () {
         getLogger: getLogger,
         addAction: addAction,
         createFunc: createFunc,
+        createDfdFunc: createDfdFunc,
         setMainFunc: setMainFunc,
         initModule: initModule,
     }
@@ -884,7 +888,7 @@ spa_page_transition2.shell = (function () {
         spa_page_transition2.model.execAction(anchor_map).then(function (data) {
             renderPage(data);
         }, function (data) {
-            if (data.stays) {
+            if (data && data.stays) {
                 return;
             } else {
                 renderErrorPage(data.callback_data);
@@ -940,22 +944,29 @@ spa_page_transition2.model = (function () {
             promise = $.Deferred().resolve().promise(),
             action = findAction(action_id);
 
+        spa_page_transition2.getLogger().debug('execAction.len', action.funcList.length);
         promise = execFunc(action.funcList, promise, i);
         return promise;
     };
 
     execFunc = function (func_list, promise, idx) {
-        spa_page_transition2.getLogger().debug('execFunc.idx', idx, 'len', func_list.length);
+
+        spa_page_transition2.getLogger().debug('execFunc.idx', idx);
+
         promise = promise.then(function (data) {
+            spa_page_transition2.getLogger().debug('execFunc.resolve.idx', idx);
             return func_list[idx].execute();
         }, function (data) {
-            spa_page_transition2.getLogger().debug('execFunc.failed.data', data);
+            spa_page_transition2.getLogger().debug('execFunc.fail.idx', idx);
+            data.call_back_data = {};
             return $.Deferred().reject(data).promise();
         });
+
         if (++idx < func_list.length) {
-            spa_page_transition2.getLogger().debug('execFunc.idx++', idx, 'len', func_list.length);
+            spa_page_transition2.getLogger().debug('execFunc.next.idx', idx);
             promise = execFunc(func_list, promise, idx);
         }
+
         return promise;
     }
     ;
@@ -984,14 +995,14 @@ var spa_function = (function () {
         createFunc, createDfdFunc;
 
     protoFunc = {
-        async: true,
         execute: function () {
+            spa_page_transition2.getLogger().debug('normal func execute!');
             var d = $.Deferred();
             try {
                 this.main_func(this);
             } catch (e) {
                 console.warn(e);
-                d.reject();
+                d.reject(e);
                 spa_page_transition2.getLogger().debug('execute.rejected!!!!');
             }
             if (this.stays) {
@@ -1001,8 +1012,6 @@ var spa_function = (function () {
                 d.resolve();
             }
             return d.promise();
-        },
-        fail: function (error) {
         },
         stay: function () {
             this.stays = true;
@@ -1039,17 +1048,33 @@ var spa_function = (function () {
             res = createFunc.apply(this, arguments);
 
         res.execute = function () {
-            return spa_page_data.serverAccessor(this.path, this.params).done(function (data) {
-                this.main_func(this, data);
+            spa_page_transition2.getLogger().debug('dfd func execute!');
+            var
+                d = $.Deferred(),
+                this_obj = this;
+            spa_page_data.serverAccessor(this.path, this.params).then(function (data) {
+                this_obj.main_func(this_obj, data);
+                d.resolve();
+            }, function (data) {
+                d.reject(data);
             });
+            return d.promise();
+
+            // var result;
+            // setTimeout(function () {
+            //     result = spa_page_data.serverAccessor(this.path, this.params).then(function (data) {
+            //         this.main_func(this, data);
+            //     });
+            // }, 1000);
+            // return result;
         };
 
-        res.prototype.path = function (_path) {
+        res.path = function (_path) {
             this.path = _path;
             return this;
         };
 
-        res.prototype.params = function (_params) {
+        res.params = function (_params) {
             this.params = _params;
             return this;
         };
