@@ -893,11 +893,11 @@ spa_page_transition2.shell = (function () {
     };
 
     renderPage = function (data) {
-        alert('Page rendered!')
+        console.log('### result ### Page rendered!')
     };
 
     renderErrorPage = function (data) {
-        alert('Error page rendered!')
+        console.log('### result ### Error page rendered!')
     };
 
     return {
@@ -940,28 +940,28 @@ spa_page_transition2.model = (function () {
             promise = $.Deferred().resolve().promise(),
             action = findAction(action_id);
 
-        spa_page_transition2.getLogger().debug('execAction.action_id', action.actionId);
-        execFunc(action.funcList, promise, i);
+        promise = execFunc(action.funcList, promise, i);
         return promise;
     };
 
     execFunc = function (func_list, promise, idx) {
         spa_page_transition2.getLogger().debug('execFunc.idx', idx, 'len', func_list.length);
         promise = promise.then(function (data) {
-            func_list[idx].execute();
+            return func_list[idx].execute();
         }, function (data) {
             spa_page_transition2.getLogger().debug('execFunc.failed.data', data);
+            return $.Deferred().reject(data).promise();
         });
         if (++idx < func_list.length) {
             spa_page_transition2.getLogger().debug('execFunc.idx++', idx, 'len', func_list.length);
-            execFunc(func_list, promise, idx);
+            promise = execFunc(func_list, promise, idx);
         }
+        return promise;
     }
     ;
 
     var findAction = function (action_id) {
         var i;
-        spa_page_transition2.getLogger().debug('findAction', action_id);
         for (i = 0; i < actionList.length; i++) {
             if (action_id === actionList[i].actionId) {
                 return actionList[i];
