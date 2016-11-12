@@ -5,8 +5,14 @@ var action_manager_trial = (function () {
         initModule
         ;
 
-    firstFunc = spa_page_transition2.createFunc().setMainFunc(function () {
+    firstFunc = spa_page_transition2.createFunc().setMainFunc(function (observer) {
         console.log('first func is called!');
+        if (false) {
+            observer.stay(true);
+        } else {
+            // throw new Error('OMG! firstFunc');
+        }
+
     });
 
     secondFunc = spa_page_transition2.createFunc('KEY1').setMainFunc(function (observer) {
@@ -14,7 +20,7 @@ var action_manager_trial = (function () {
         if (false) {
             observer.stay(true);
         } else {
-            // throw new Error('OMG!');
+            // throw new Error('OMG! secondFunc');
             observer.trigger('KEY1', 1);
         }
     });
@@ -30,15 +36,20 @@ var action_manager_trial = (function () {
 
     dfdFirs1stFunc = spa_page_transition2.createDfdFunc('KEY_D1').path('./server_response_initialize.json').setMainFunc(function (observer, data) {
         console.log('dfd 1st func is called! data=' + data);
-        observer.trigger('KEY_D1', 'D1');
+        if (false) {
+            observer.stay(true);
+        } else {
+            // throw new Error('OMG! dfdFirs1stFunc');
+            observer.trigger('KEY_D1', 'D1');
+        }
     });
 
     initModule = function () {
         spa_page_transition2
-            .addAction('action-A', [secondFunc, dfdFirs1stFunc, thirdFunc])
+            .addAction('action-A', [firstFunc, dfdFirs1stFunc, secondFunc, thirdFunc])
             // .addAction('action-A', [dfdFirs1stFunc, firstFunc, secondFunc])
             // .addAction('action-A', [firstFunc, secondFunc])
-            .addAction('action-B', [secondFunc, thirdFunc])
+            .addAction('action-B', [firstFunc, secondFunc, thirdFunc])
             .initModule();
 
         spa_page_transition2.shell.execAction('action-A');

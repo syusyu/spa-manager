@@ -884,7 +884,7 @@ spa_page_transition2.shell = (function () {
         execAction, renderPage, renderErrorPage;
 
     execAction = function (anchor_map) {
-        spa_page_transition2.getLogger().debug('anchor_map', anchor_map);
+        // spa_page_transition2.getLogger().debug('anchor_map', anchor_map);
         spa_page_transition2.model.execAction(anchor_map).then(function (data) {
             renderPage(data);
         }, function (data) {
@@ -944,28 +944,28 @@ spa_page_transition2.model = (function () {
             promise = $.Deferred().resolve().promise(),
             action = findAction(action_id);
 
-        spa_page_transition2.getLogger().debug('execAction.len', action.funcList.length);
+        // spa_page_transition2.getLogger().debug('execAction.len', action.funcList.length);
         promise = execFunc(action.funcList, promise, i);
         return promise;
     };
 
     execFunc = function (func_list, promise, idx) {
 
-        spa_page_transition2.getLogger().debug('execFunc.idx', idx);
+        // spa_page_transition2.getLogger().debug('execFunc.idx', idx);
 
         promise = promise.then(function (data) {
-            spa_page_transition2.getLogger().debug('execFunc.resolve.idx', idx);
-            return func_list[idx].execute();
+            // spa_page_transition2.getLogger().debug('execFunc.resolve.idx', idx);
+            promise = func_list[idx].execute();
+            if (++idx < func_list.length) {
+                // spa_page_transition2.getLogger().debug('execFunc.next.idx', idx);
+                promise = execFunc(func_list, promise, idx);
+            }
+            return promise;
         }, function (data) {
-            spa_page_transition2.getLogger().debug('execFunc.fail.idx', idx);
+            // spa_page_transition2.getLogger().debug('execFunc.fail.idx', idx);
             data.call_back_data = {};
             return $.Deferred().reject(data).promise();
         });
-
-        if (++idx < func_list.length) {
-            spa_page_transition2.getLogger().debug('execFunc.next.idx', idx);
-            promise = execFunc(func_list, promise, idx);
-        }
 
         return promise;
     }
@@ -996,17 +996,16 @@ var spa_function = (function () {
 
     protoFunc = {
         execute: function () {
-            spa_page_transition2.getLogger().debug('normal func execute!');
             var d = $.Deferred();
             try {
                 this.main_func(this);
             } catch (e) {
                 console.warn(e);
                 d.reject(e);
-                spa_page_transition2.getLogger().debug('execute.rejected!!!!');
+                // spa_page_transition2.getLogger().debug('execute.rejected!!!!');
             }
             if (this.stays) {
-                spa_page_transition2.getLogger().debug('execute.rejected!');
+                // spa_page_transition2.getLogger().debug('execute.rejected!');
                 d.reject({'stays': this.stays});
             } else {
                 d.resolve();
@@ -1048,25 +1047,26 @@ var spa_function = (function () {
             res = createFunc.apply(this, arguments);
 
         res.execute = function () {
-            spa_page_transition2.getLogger().debug('dfd func execute!');
             var
                 d = $.Deferred(),
                 this_obj = this;
-            spa_page_data.serverAccessor(this.path, this.params).then(function (data) {
-                this_obj.main_func(this_obj, data);
-                d.resolve();
-            }, function (data) {
-                d.reject(data);
-            });
-            return d.promise();
 
-            // var result;
-            // setTimeout(function () {
-            //     result = spa_page_data.serverAccessor(this.path, this.params).then(function (data) {
-            //         this.main_func(this, data);
-            //     });
-            // }, 1000);
-            // return result;
+            spa_page_data.serverAccessor(this.path, this.params).then(function (data) {
+                try {
+                    this_obj.main_func(this_obj, data);
+                } catch (e) {
+                    console.warn(e);
+                    d.reject();
+                }
+                if (this_obj.stays) {
+                    // spa_page_transition2.getLogger().debug('execute.rejected!');
+                    d.reject({'stays': this_obj.stays});
+                } else {
+                    d.resolve();
+                }
+            });
+
+            return d.promise();
         };
 
         res.path = function (_path) {
