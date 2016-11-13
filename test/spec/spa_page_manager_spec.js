@@ -1,7 +1,7 @@
 describe('TEST | spa_function', function () {
     var
         firstFunc, secondFunc, thirdFunc,
-        firstDfdFunc, secondDfdFunc, thirdDfdFunc,
+        firstDfdFunc, secondDfdFunc,
         page;
 
     firstFunc = spa_page_transition2.createFunc().setMainFunc(function (observer) {
@@ -13,8 +13,11 @@ describe('TEST | spa_function', function () {
     thirdFunc = spa_page_transition2.createFunc('KEY1', 'KEY2').setMainFunc(function (observer) {
         console.log('third func is called!');
     });
-    firstDfdFunc = spa_page_transition2.createDfdFunc('KEY_D1').path('./server_response_initialize.json').setMainFunc(function (observer, data) {
-        console.log('first dfd func is called!');
+    firstDfdFunc = spa_page_transition2.createDfdFunc('KD1').path('./').setMainFunc(function (observer, data) {
+        console.log('first DFD func is called!');
+    });
+    secondDfdFunc = spa_page_transition2.createDfdFunc('KD1').path('./').setMainFunc(function (observer, data) {
+        console.log('first DFD func is called!');
     });
 
     page = {
@@ -31,15 +34,36 @@ describe('TEST | spa_function', function () {
             idx = 0;
 
         beforeEach(function () {
-            spyOn(firstFunc, 'main_func');
-            spyOn(secondFunc, 'main_func');
-            spyOn(thirdFunc, 'main_func');
+            spyOn(firstFunc, 'main_func').and.callThrough();
+            spyOn(secondFunc, 'main_func').and.callThrough();
+            spyOn(thirdFunc, 'main_func').and.callThrough();
             spyOn(firstDfdFunc, 'main_func');
-            spyOn(page, 'renderPage');
-            spyOn(page, 'renderErrorPage');
+            spyOn(secondDfdFunc, 'main_func');
+            spyOn(firstDfdFunc, 'execute').and.callFake(function () {
+                var
+                    d = $.Deferred().resolve(),
+                    this_obj = this;
+                d.then(function (data) {
+                    d = this_obj.exec_main_func(d, this_obj);
+                });
+                return d.promise();
+            });
+            spyOn(secondDfdFunc, 'execute').and.callFake(function () {
+                var
+                    d = $.Deferred().resolve(),
+                    this_obj = this;
+                d.then(function (data) {
+                    d = this_obj.exec_main_func(d, this_obj);
+                });
+                return d.promise();
+            });
+            spyOn(page, 'renderPage').and.callThrough();
+            spyOn(page, 'renderErrorPage').and.callThrough();
+        });
 
+        it('idx=' + idx, function () {
             // spa_page_transition2.model.addAction('action-A', [firstFunc, secondFunc, thirdFunc]);
-            spa_page_transition2.model.addAction('action-A', [firstDfdFunc, secondFunc, thirdFunc]);
+            spa_page_transition2.model.addAction('action-A', [firstFunc, firstDfdFunc, secondFunc, secondDfdFunc, thirdFunc]);
             spa_page_transition2.model.execAction('action-A').then(function (data) {
                 page.renderPage(data);
             }, function (data) {
@@ -50,13 +74,11 @@ describe('TEST | spa_function', function () {
                 }
             });
 
-        });
-
-        it('idx=' + idx, function () {
-            // expect(firstFunc.main_func).toHaveBeenCalled();
-            expect(firstDfdFunc.main_func).toHaveBeenCalled();
+            expect(firstFunc.main_func).toHaveBeenCalled();
             expect(secondFunc.main_func).toHaveBeenCalled();
             expect(thirdFunc.main_func).toHaveBeenCalled();
+            expect(firstDfdFunc.main_func).toHaveBeenCalled();
+            expect(secondDfdFunc.main_func).toHaveBeenCalled();
             expect(page.renderPage).toHaveBeenCalled();
             expect(page.renderErrorPage).not.toHaveBeenCalled();
         });

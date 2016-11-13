@@ -997,24 +997,30 @@ var spa_function = (function () {
     protoFunc = {
         execute: function () {
             var d = $.Deferred();
+            return this.exec_main_func(d, this).promise();
+        },
+
+        exec_main_func: function (d, this_obj) {
             try {
-                this.main_func(this);
+                this_obj.main_func(this);
             } catch (e) {
                 console.warn(e);
                 d.reject(e);
                 // spa_page_transition2.getLogger().debug('execute.rejected!!!!');
             }
-            if (this.stays) {
+            if (this_obj.stays) {
                 // spa_page_transition2.getLogger().debug('execute.rejected!');
-                d.reject({'stays': this.stays});
+                d.reject({'stays': this_obj.stays});
             } else {
                 d.resolve();
             }
-            return d.promise();
+            return d;
         },
+
         stay: function () {
             this.stays = true;
         },
+
         trigger: function (key, val) {
             if (!(key in spa_page_transition.DATA_BIND_EVENT)) {
                 throw new Error('No trigger key is found. key = ' + key + ', all events=' + Object.keys(spa_page_transition.DATA_BIND_EVENT));
@@ -1022,6 +1028,7 @@ var spa_function = (function () {
             $(spa_page_transition.DATA_BIND_EVENT).trigger(key, val);
             return this;
         },
+
         setMainFunc: function (_main_func) {
             this.main_func = _main_func;
             return this;
@@ -1051,31 +1058,20 @@ var spa_function = (function () {
                 d = $.Deferred(),
                 this_obj = this;
 
-            spa_page_data.serverAccessor(this.path, this.params).then(function (data) {
-                try {
-                    this_obj.main_func(this_obj, data);
-                } catch (e) {
-                    console.warn(e);
-                    d.reject();
-                }
-                if (this_obj.stays) {
-                    // spa_page_transition2.getLogger().debug('execute.rejected!');
-                    d.reject({'stays': this_obj.stays});
-                } else {
-                    d.resolve();
-                }
+            spa_page_data.serverAccessor(this._path, this._params).then(function (data) {
+                d = this_obj.exec_main_func(d, this_obj);
             });
 
             return d.promise();
         };
 
         res.path = function (_path) {
-            this.path = _path;
+            this._path = _path;
             return this;
         };
 
         res.params = function (_params) {
-            this.params = _params;
+            this._params = _params;
             return this;
         };
 
