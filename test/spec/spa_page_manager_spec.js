@@ -2,8 +2,7 @@ describe('TEST | spa_function', function () {
     var
         n1, n2, n3, ns, ne,
         d1, d2, d3, ds, de,
-
-        page, dfdResolve, execActionDone;
+        page, dfdResolve;
 
     page = {
         renderPage: function () {
@@ -21,23 +20,9 @@ describe('TEST | spa_function', function () {
 
         d.then(function (data) {
             d = this_obj.exec_main_func(this_obj);
-            // d.fail(function () {
-            //     console.log('dfd fail!');
-            // })
         });
         return d.promise();
     };
-
-    // execActionDone = function (data) {
-    //     page.renderPage(data);
-    // }, function (data) {
-    //     console.log('execActionDone.data=' + data);
-    //     if (data && data.stays) {
-    //         return;
-    //     } else {
-    //         page.renderErrorPage();
-    //     }
-    // };
 
     n1 = spa_page_transition2.createFunc().setMainFunc(function () {
         console.log('n1 is called!');
@@ -160,7 +145,6 @@ describe('TEST | spa_function', function () {
                 spa_page_transition2.model.execAction('action').then(function (data) {
                     page.renderPage(data);
                 }, function (data) {
-                    console.log('execActionDone.data=' + data);
                     if (data && data.stays) {
                         return;
                     } else {
