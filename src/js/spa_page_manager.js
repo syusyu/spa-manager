@@ -895,14 +895,24 @@ spa_page_transition2.shell = (function () {
         execAction, renderPage, renderErrorPage;
 
     execAction = function (anchor_map) {
-        // spa_page_transition2.getLogger().debug('anchor_map', anchor_map);
+        // spa_page_transition2.model.execAction(anchor_map).then(function (data) {
+        //     renderPage(data);
+        // }, function (data) {
+        //     if (data && data.stays) {
+        //         return;
+        //     } else {
+        //         // renderErrorPage(data.callback_data);
+        //         renderErrorPage();
+        //     }
+        // });
         spa_page_transition2.model.execAction(anchor_map).then(function (data) {
             renderPage(data);
         }, function (data) {
             if (data && data.stays) {
                 return;
             } else {
-                renderErrorPage(data.callback_data);
+                // renderErrorPage(data.callback_data);
+                renderErrorPage();
             }
         });
     };
@@ -981,7 +991,7 @@ spa_page_transition2.model = (function () {
             }
             return promise;
         }, function (data) {
-            // spa_page_transition2.getLogger().debug('execFunc.fail.idx', idx);
+            // spa_page_transition2.getLogger().debug('execFunc.fail.data', data);
             // data.call_back_data = {};
             return $.Deferred().reject(data).promise();
         });
@@ -1018,10 +1028,6 @@ var spa_function = (function () {
 
     protoFunc = {
         execute: function () {
-            // var d = $.Deferred();
-            // d.fail(function () {
-            //     spa_page_transition2.getLogger().debug('normal.execute.fail!');
-            // })
             return this.exec_main_func(this).promise();
         },
 
@@ -1030,19 +1036,15 @@ var spa_function = (function () {
                 this_obj.main_func(this);
             } catch (e) {
                 // console.warn(e);
-                // spa_page_transition2.getLogger().debug('execute.rejected!!!!');
-                // d.reject(e);
+                spa_page_transition2.getLogger().debug('execute.rejected!!!!');
                 return $.Deferred().reject();
             }
             if (this_obj.stays) {
                 spa_page_transition2.getLogger().debug('execute.stays.rejected!');
-                // d.reject({'stays': this_obj.stays});
                 return $.Deferred().reject({'stays': this_obj.stays});
             } else {
-                // d.resolve();
                 return $.Deferred().resolve();
             }
-            // return d;
         },
 
         stay: function () {

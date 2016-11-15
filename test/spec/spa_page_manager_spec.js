@@ -21,22 +21,23 @@ describe('TEST | spa_function', function () {
 
         d.then(function (data) {
             d = this_obj.exec_main_func(this_obj);
-            d.fail(function () {
-                console.log('dfd fail!');
-            })
+            // d.fail(function () {
+            //     console.log('dfd fail!');
+            // })
         });
         return d.promise();
     };
 
-    execActionDone = function (data) {
-        page.renderPage(data);
-    }, function (data) {
-        if (data && data.stays) {
-            return;
-        } else {
-            page.renderErrorPage(data.callback_data);
-        }
-    };
+    // execActionDone = function (data) {
+    //     page.renderPage(data);
+    // }, function (data) {
+    //     console.log('execActionDone.data=' + data);
+    //     if (data && data.stays) {
+    //         return;
+    //     } else {
+    //         page.renderErrorPage();
+    //     }
+    // };
 
     n1 = spa_page_transition2.createFunc().setMainFunc(function () {
         console.log('n1 is called!');
@@ -85,51 +86,51 @@ describe('TEST | spa_function', function () {
                 {
                     'title': 'n all',
                     'func_list': [n1, n2, n3],
-                    'expected': {'n1': true, 'n2': true, 'n3': true, 'render': true, 'p.error': false}
+                    'expected': {'n1': true, 'n2': true, 'n3': true, 'render': true, 'error': false}
                 },
                 {
                     'title': 'd all',
                     'func_list': [d1, d2, d3],
-                    'expected': {'d1': true, 'd2': true, 'd3': true, 'render': true, 'p.error': false}
+                    'expected': {'d1': true, 'd2': true, 'd3': true, 'render': true, 'error': false}
                 },
                 {
                     'title': 'd n d',
                     'func_list': [d1, n2, d3],
-                    'expected': {'d1': true, 'n2': true, 'd3': true, 'render': true, 'p.error': false}
+                    'expected': {'d1': true, 'n2': true, 'd3': true, 'render': true, 'error': false}
                 },
 
                 // stay
                 {
                     'title': 'n first stay',
                     'func_list': [ns, n2, n3],
-                    'expected': {'ns': true, 'n2': false, 'n3': false, 'render': false, 'p.error': false}
+                    'expected': {'ns': true, 'n2': false, 'n3': false, 'render': false, 'error': false}
                 },
                 {
                     'title': 'd first stay',
                     'func_list': [ds, n2, n3],
-                    'expected': {'ds': true, 'n2': false, 'n3': false, 'render': false, 'p.error': false}
+                    'expected': {'ds': true, 'n2': false, 'n3': false, 'render': false, 'error': false}
                 },
                 {
                     'title': 'd third stay',
                     'func_list': [n1, d2, ds],
-                    'expected': {'n1': true, 'd2': true, 'ds': true, 'render': false, 'p.error': false}
+                    'expected': {'n1': true, 'd2': true, 'ds': true, 'render': false, 'error': false}
                 },
 
                 //error
                 {
                     'title': 'n first error',
                     'func_list': [ne, n2, n3],
-                    'expected': {'ne': true, 'n2': false, 'n3': false, 'render': false, 'p.error': true}
+                    'expected': {'ne': true, 'n2': false, 'n3': false, 'render': false, 'error': true}
                 },
                 {
                     'title': 'd second error',
                     'func_list': [n1, de, n3],
-                    'expected': {'n1': true, 'de': true, 'n3': false, 'render': false, 'p.error': true}
+                    'expected': {'n1': true, 'de': true, 'n3': false, 'render': false, 'error': true}
                 },
                 {
                     'title': 'd third error',
-                    'func_list': [n1, d2, d3],
-                    'expected': {'n1': true, 'd2': true, 'd3': true, 'render': false, 'p.error': true}
+                    'func_list': [n1, d2, de],
+                    'expected': {'n1': true, 'd2': true, 'de': true, 'render': false, 'error': true}
                 },
             ];
 
@@ -156,7 +157,16 @@ describe('TEST | spa_function', function () {
         $.each(params, function (param_idx, obj) {
             it(obj.title + '(' + param_idx + ')', function () {
                 spa_page_transition2.model.initialize().addAction('action', obj.func_list).run();
-                spa_page_transition2.model.execAction('action').then(execActionDone);
+                spa_page_transition2.model.execAction('action').then(function (data) {
+                    page.renderPage(data);
+                }, function (data) {
+                    console.log('execActionDone.data=' + data);
+                    if (data && data.stays) {
+                        return;
+                    } else {
+                        page.renderErrorPage();
+                    }
+                });
 
                 obj.expected.n1 ? expect(n1.main_func).toHaveBeenCalled() : expect(n1.main_func).not.toHaveBeenCalled();
                 obj.expected.n2 ? expect(n2.main_func).toHaveBeenCalled() : expect(n2.main_func).not.toHaveBeenCalled();
