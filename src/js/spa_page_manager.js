@@ -844,7 +844,8 @@ var spa_page_transition2 = (function () {
     'use strict';
     var
         addAction, initModule, spaLogger, getLogger,
-        createFunc, createDfdFunc, setMainFunc;
+        createFunc, createDfdFunc, setMainFunc,
+        initialize, action, run;
 
 
     spaLogger = spa_log.createLogger(true, 'SPA2 ');
@@ -866,6 +867,16 @@ var spa_page_transition2 = (function () {
     };
     initModule = function () {
         spa_page_transition2.model.initModule();
+    };
+
+    initialize = function () {
+        return spa_page_transition2.model.initialize();
+    };
+    action = function () {
+        return spa_page_transition2.model.addAction();
+    };
+    run = function () {
+        spa_page_transition2.model.run();
     };
 
     return {
@@ -916,14 +927,22 @@ spa_page_transition2.model = (function () {
         initializeFunc, setInitializeFunc,
         actionList = [],
 
-        initModule;
+        initModule,
+        initialize, run;
 
     initModule = function () {
         $.each(Object.keys(spa_page_transition.DATA_BIND_EVENT), function (idx_evt, key) {
             $(spa_page_transition.DATA_BIND_EVENT).on(key, function (e, data) {
-                console.log('trans2.event.key=' + key + ', data=' + data);
+                // console.log('model.receive.trigger.key=' + key + ', data=' + data + ', evt.keys=' + slist);
             });
         });
+    };
+    initialize = function () {
+        actionList = [];
+        return this;
+    };
+    run = function () {
+        initModule();
     };
 
     protoAction = {};
@@ -963,7 +982,7 @@ spa_page_transition2.model = (function () {
             return promise;
         }, function (data) {
             // spa_page_transition2.getLogger().debug('execFunc.fail.idx', idx);
-            data.call_back_data = {};
+            // data.call_back_data = {};
             return $.Deferred().reject(data).promise();
         });
 
@@ -984,6 +1003,9 @@ spa_page_transition2.model = (function () {
         initModule: initModule,
         addAction: addAction,
         execAction: execAction,
+
+        initialize: initialize,
+        run: run,
     }
 })
 ();
@@ -996,25 +1018,31 @@ var spa_function = (function () {
 
     protoFunc = {
         execute: function () {
-            var d = $.Deferred();
-            return this.exec_main_func(d, this).promise();
+            // var d = $.Deferred();
+            // d.fail(function () {
+            //     spa_page_transition2.getLogger().debug('normal.execute.fail!');
+            // })
+            return this.exec_main_func(this).promise();
         },
 
-        exec_main_func: function (d, this_obj) {
+        exec_main_func: function (this_obj) {
             try {
                 this_obj.main_func(this);
             } catch (e) {
-                console.warn(e);
-                d.reject(e);
+                // console.warn(e);
                 // spa_page_transition2.getLogger().debug('execute.rejected!!!!');
+                // d.reject(e);
+                return $.Deferred().reject();
             }
             if (this_obj.stays) {
-                // spa_page_transition2.getLogger().debug('execute.rejected!');
-                d.reject({'stays': this_obj.stays});
+                spa_page_transition2.getLogger().debug('execute.stays.rejected!');
+                // d.reject({'stays': this_obj.stays});
+                return $.Deferred().reject({'stays': this_obj.stays});
             } else {
-                d.resolve();
+                // d.resolve();
+                return $.Deferred().resolve();
             }
-            return d;
+            // return d;
         },
 
         stay: function () {
@@ -1025,7 +1053,9 @@ var spa_function = (function () {
             if (!(key in spa_page_transition.DATA_BIND_EVENT)) {
                 throw new Error('No trigger key is found. key = ' + key + ', all events=' + Object.keys(spa_page_transition.DATA_BIND_EVENT));
             }
+            spa_page_transition2.getLogger().debug('trigger.key', key, 'val', val);
             $(spa_page_transition.DATA_BIND_EVENT).trigger(key, val);
+
             return this;
         },
 
@@ -1059,7 +1089,7 @@ var spa_function = (function () {
                 this_obj = this;
 
             spa_page_data.serverAccessor(this._path, this._params).then(function (data) {
-                d = this_obj.exec_main_func(d, this_obj);
+                d = this_obj.exec_main_func(this_obj);
             });
 
             return d.promise();
