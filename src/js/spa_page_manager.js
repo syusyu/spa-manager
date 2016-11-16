@@ -486,6 +486,7 @@ var spa_data_bind = (function () {
             create_loop_element, _do_find_loop_element, _clone_loop_children, _replace_cloned_element_attr,
 
             get_toggle_class_list,
+            trigger,
 
             BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop'];
 
@@ -715,6 +716,72 @@ var spa_data_bind = (function () {
             return result;
         };
 
+        trigger = function (key, data) {
+            var
+                bind_props, all_props, bind_attr_type_selectors;
+
+            if (!data) {
+                return true;
+            }
+
+            init_bind_prop_map(key, data);
+            all_props = get_all_prop_map();
+            bind_attr_type_selectors = each_attr_type_selectors();
+
+            create_loop_element($('body'), data, key);
+
+            $(bind_attr_type_selectors).each(function (idx_bind, obj) {
+                var
+                    el_prop_key,
+                    $this = $(this);
+
+                each_attr_type(function (bind_attr, attr) {
+                    el_prop_key = $this.attr(bind_attr);
+                    if (!el_prop_key) {
+                        return true;
+                    }
+                    if (all_props[el_prop_key]) {
+                        settle_bind_val($this, attr, data, el_prop_key);
+                    } else if (!$this.attr('data-bind-loop')) {
+                        $this.hide();
+                    }
+                });
+            });
+
+            $('[data-bind-show-if],[data-bind-show-id]').each(function (idx, el) {
+                var
+                    pure_attr, obj_key_cond_list, obj_key_list, cond, val;
+
+                if (!data) {
+                    $(el).hide();
+                    console.warn('data-bind-show-if.data is null');
+                    return true;
+                }
+
+                pure_attr = $(el).attr('data-bind-show-if') ? $(el).attr('data-bind-show-if') : $(el).attr('data-bind-show-id');
+                if (!pure_attr) {
+                    return true;
+                }
+
+                obj_key_cond_list = pure_attr.split('=');
+                obj_key_list = obj_key_cond_list[0].split('\.');
+                if (obj_key_cond_list.length > 1) {
+                    cond = obj_key_cond_list[1];
+                }
+
+                if (obj_key_list && obj_key_list[0] === key) {
+                    val = data[obj_key_list[1]];
+                    if (!val) {
+                        $(el).hide();
+                    } else if (cond && cond !== val) {
+                        $(el).hide();
+                    } else {
+                        $(el).show();
+                    }
+                }
+            });
+        };
+
         return {
             init_bind_prop_map: init_bind_prop_map,
             get_all_prop_map: get_all_prop_map,
@@ -723,6 +790,7 @@ var spa_data_bind = (function () {
             create_loop_element: create_loop_element,
             each_attr_type_selectors: each_attr_type_selectors,
             get_toggle_class_list: get_toggle_class_list,
+            trigger: trigger,
 
             //VisibleForTesting
             _get_bind_val: _get_bind_val,
@@ -732,69 +800,7 @@ var spa_data_bind = (function () {
     initModule = function () {
         $.each(Object.keys(spa_page_transition.DATA_BIND_EVENT), function (idx_evt, key) {
             $(spa_page_transition.DATA_BIND_EVENT).on(key, function (e, data) {
-                var
-                    bind_props, all_props, bind_attr_type_selectors;
-
-                if (!data) {
-                    return true;
-                }
-
-                bind_props = evt_data_bind_view.init_bind_prop_map(key, data);
-                all_props = bind_props.get_all_prop_map();
-                bind_attr_type_selectors = evt_data_bind_view.each_attr_type_selectors();
-
-                evt_data_bind_view.create_loop_element($('body'), data, key);
-
-                $(bind_attr_type_selectors).each(function (idx_bind, obj) {
-                    var
-                        el_prop_key,
-                        $this = $(this);
-
-                    evt_data_bind_view.each_attr_type(function (bind_attr, attr) {
-                        el_prop_key = $this.attr(bind_attr);
-                        if (!el_prop_key) {
-                            return true;
-                        }
-                        if (all_props[el_prop_key]) {
-                            evt_data_bind_view.settle_bind_val($this, attr, data, el_prop_key);
-                        } else if (!$this.attr('data-bind-loop')) {
-                            $this.hide();
-                        }
-                    });
-                });
-
-                $('[data-bind-show-if],[data-bind-show-id]').each(function (idx, el) {
-                    var
-                        pure_attr, obj_key_cond_list, obj_key_list, cond, val;
-
-                    if (!data) {
-                        $(el).hide();
-                        console.warn('data-bind-show-if.data is null');
-                        return true;
-                    }
-
-                    pure_attr = $(el).attr('data-bind-show-if') ? $(el).attr('data-bind-show-if') : $(el).attr('data-bind-show-id');
-                    if (!pure_attr) {
-                        return true;
-                    }
-
-                    obj_key_cond_list = pure_attr.split('=');
-                    obj_key_list = obj_key_cond_list[0].split('\.');
-                    if (obj_key_cond_list.length > 1) {
-                        cond = obj_key_cond_list[1];
-                    }
-
-                    if (obj_key_list && obj_key_list[0] === key) {
-                        val = data[obj_key_list[1]];
-                        if (!val) {
-                            $(el).hide();
-                        } else if (cond && cond !== val) {
-                            $(el).hide();
-                        } else {
-                            $(el).show();
-                        }
-                    }
-                });
+                evt_data_bind_view.trigger(key, data);
             });
         });
 
@@ -1046,12 +1052,9 @@ var spa_function = (function () {
         },
 
         trigger: function (key, val) {
-            if (!(key in spa_page_transition.DATA_BIND_EVENT)) {
-                throw new Error('No trigger key is found. key = ' + key + ', all events=' + Object.keys(spa_page_transition.DATA_BIND_EVENT));
-            }
-            spa_page_transition2.getLogger().debug('trigger.key', key, 'val', val);
-            $(spa_page_transition.DATA_BIND_EVENT).trigger(key, val);
-
+            // spa_page_transition2.getLogger().debug('trigger.key', key, 'val', val);
+            // $(spa_page_transition.DATA_BIND_EVENT).trigger(key, val);
+            spa_page_transition.shell.evt_data_bind_view.trigger(key, val);
             return this;
         },
 

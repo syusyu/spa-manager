@@ -3,7 +3,7 @@ describe('TEST | spa_function', function () {
         n1, n2, n3, ns, ne,
         d1, d2, d3, ds, de,
         initFunc,
-        page, dfdResolve;
+        page, dfdResolve, trigger;
 
     page = {
         renderPage: function () {
@@ -23,6 +23,11 @@ describe('TEST | spa_function', function () {
             d = this_obj.exec_main_func(this_obj);
         });
         return d.promise();
+    };
+
+    trigger = function (key, val) {
+        console.log('trigger is called. key=' + key + ', val=' + val);
+        return this;
     };
 
     initFunc = spa_page_transition2.createDfdFunc().path('./').setMainFunc(function (data) {
@@ -134,21 +139,32 @@ describe('TEST | spa_function', function () {
         beforeEach(function () {
             spyOn(initFunc, 'execute').and.callFake(dfdResolve);
             spyOn(initFunc, 'main_func').and.callThrough();
+            spyOn(initFunc, 'trigger').and.callFake(trigger);
             spyOn(n1, 'main_func').and.callThrough();
+            spyOn(n1, 'trigger').and.callFake(trigger);
             spyOn(n2, 'main_func').and.callThrough();
+            spyOn(n2, 'trigger').and.callFake(trigger);
             spyOn(n3, 'main_func').and.callThrough();
+            spyOn(n3, 'trigger').and.callFake(trigger);
             spyOn(ns, 'main_func').and.callThrough();
+            spyOn(ns, 'trigger').and.callFake(trigger);
             spyOn(ne, 'main_func').and.callThrough();
+            spyOn(ne, 'trigger').and.callFake(trigger);
             spyOn(d1, 'main_func').and.callThrough();
             spyOn(d1, 'execute').and.callFake(dfdResolve);
+            spyOn(d1, 'trigger').and.callFake(trigger);
             spyOn(d2, 'main_func').and.callThrough();
             spyOn(d2, 'execute').and.callFake(dfdResolve);
+            spyOn(d2, 'trigger').and.callFake(trigger);
             spyOn(d3, 'main_func').and.callThrough();
             spyOn(d3, 'execute').and.callFake(dfdResolve);
+            spyOn(d3, 'trigger').and.callFake(trigger);
             spyOn(ds, 'main_func').and.callThrough();
             spyOn(ds, 'execute').and.callFake(dfdResolve);
+            spyOn(ds, 'trigger').and.callFake(trigger);
             spyOn(de, 'main_func').and.callThrough();
             spyOn(de, 'execute').and.callFake(dfdResolve);
+            spyOn(de, 'trigger').and.callFake(trigger);
             spyOn(page, 'renderPage').and.callThrough();
             spyOn(page, 'renderErrorPage').and.callThrough();
         });
