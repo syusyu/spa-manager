@@ -924,7 +924,7 @@ spa_page_transition2.model = (function () {
     'use strict';
     var
         addAction, protoAction, execAction, execFunc,
-        initializeFunc, setInitializeFunc,
+        initFunc, setInitFunc, isInitFuncExecuted, makeFuncList,
         actionList = [],
 
         initModule,
@@ -957,13 +957,22 @@ spa_page_transition2.model = (function () {
         return this;
     };
 
+    setInitFunc = function (init_func) {
+        initFunc = init_func;
+    };
+
     execAction = function (action_id) {
         var
             i = 0,
             promise = $.Deferred().resolve().promise(),
-            action = findAction(action_id);
+            action = findAction(action_id),
+            func_list = makeFuncList(action.funcList);
 
-        return execFunc(action.funcList, promise, i);
+        if (func_list && func_list.length > 0) {
+            return execFunc(action.funcList, promise, i);
+        } else {
+            return $.Deferred().resolve().promise();
+        }
     };
 
     execFunc = function (func_list, promise, idx) {
@@ -979,6 +988,13 @@ spa_page_transition2.model = (function () {
         return promise;
     };
 
+    makeFuncList = function (func_list) {
+        if (initFunc && !isInitFuncExecuted) {
+            func_list.unshift(initFunc);
+        }
+        return func_list;
+    };
+
     var findAction = function (action_id) {
         var i;
         for (i = 0; i < actionList.length; i++) {
@@ -991,6 +1007,7 @@ spa_page_transition2.model = (function () {
     return {
         initModule: initModule,
         addAction: addAction,
+        setInitFunc: setInitFunc,
         execAction: execAction,
 
         initialize: initialize,

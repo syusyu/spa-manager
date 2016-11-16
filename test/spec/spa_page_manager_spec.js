@@ -2,6 +2,7 @@ describe('TEST | spa_function', function () {
     var
         n1, n2, n3, ns, ne,
         d1, d2, d3, ds, de,
+        initFunc,
         page, dfdResolve;
 
     page = {
@@ -23,6 +24,10 @@ describe('TEST | spa_function', function () {
         });
         return d.promise();
     };
+
+    initFunc = spa_page_transition2.createDfdFunc().path('./').setMainFunc(function (data) {
+        console.log('initFUnc is called!');
+    });
 
     n1 = spa_page_transition2.createFunc().setMainFunc(function () {
         console.log('n1 is called!');
@@ -84,6 +89,13 @@ describe('TEST | spa_function', function () {
                     'expected': {'d1': true, 'n2': true, 'd3': true, 'render': true, 'error': false}
                 },
 
+                // normal inifFunc
+                {
+                    'title': 'init, d n d',
+                    'func_list': [initFunc, d1, n2, d3],
+                    'expected': {'initFunc': true, 'd1': true, 'n2': true, 'd3': true, 'render': true, 'error': false}
+                },
+
                 // stay
                 {
                     'title': 'n first stay',
@@ -120,6 +132,8 @@ describe('TEST | spa_function', function () {
             ];
 
         beforeEach(function () {
+            spyOn(initFunc, 'execute').and.callFake(dfdResolve);
+            spyOn(initFunc, 'main_func').and.callThrough();
             spyOn(n1, 'main_func').and.callThrough();
             spyOn(n2, 'main_func').and.callThrough();
             spyOn(n3, 'main_func').and.callThrough();
@@ -152,6 +166,7 @@ describe('TEST | spa_function', function () {
                     }
                 });
 
+                obj.expected.initFunc ? expect(initFunc.main_func).toHaveBeenCalled() : expect(initFunc.main_func).not.toHaveBeenCalled();
                 obj.expected.n1 ? expect(n1.main_func).toHaveBeenCalled() : expect(n1.main_func).not.toHaveBeenCalled();
                 obj.expected.n2 ? expect(n2.main_func).toHaveBeenCalled() : expect(n2.main_func).not.toHaveBeenCalled();
                 obj.expected.n3 ? expect(n3.main_func).toHaveBeenCalled() : expect(n3.main_func).not.toHaveBeenCalled();
