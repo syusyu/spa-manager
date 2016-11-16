@@ -34,7 +34,7 @@ var action_manager_trial = (function () {
         }
     });
 
-    dfdFirs1stFunc = spa_page_transition2.createDfdFunc('KEY_D1').path('./server_response_initialize.json').setMainFunc(function (observer, data) {
+    dfdFirs1stFunc = spa_page_transition2.createAjaxFunc('KEY_D1').path('./server_response_initialize.json').setMainFunc(function (observer, data) {
         console.log('dfd 1st func is called! data=' + data);
         if (false) {
             observer.stay();

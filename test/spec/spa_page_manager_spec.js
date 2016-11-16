@@ -30,46 +30,46 @@ describe('TEST | spa_function', function () {
         return this;
     };
 
-    initFunc = spa_page_transition2.createDfdFunc().path('./').setMainFunc(function (data) {
+    initFunc = spa_page_transition2.createAjaxFunc('./', function (data) {
         console.log('initFUnc is called!');
     });
 
-    n1 = spa_page_transition2.createFunc().setMainFunc(function () {
+    n1 = spa_page_transition2.createFunc(function () {
         console.log('n1 is called!');
     });
-    n2 = spa_page_transition2.createFunc('KEY2').setMainFunc(function (observer) {
+    n2 = spa_page_transition2.createFunc(function (observer) {
         console.log('n2 is called!');
         observer.trigger('KEY2', 2);
     });
-    n3 = spa_page_transition2.createFunc('KEY3', 'KEY33').setMainFunc(function (observer) {
+    n3 = spa_page_transition2.createFunc(function (observer) {
         console.log('n3 is called!');
         observer.trigger('KEY3', 3).trigger('KEY33', 3);
     });
-    ns = spa_page_transition2.createFunc().setMainFunc(function (observer) {
+    ns = spa_page_transition2.createFunc(function (observer) {
         console.log('ns is called!');
         observer.stay();
     });
-    ne = spa_page_transition2.createFunc().setMainFunc(function (observer) {
+    ne = spa_page_transition2.createFunc(function (observer) {
         console.log('ne is called!');
         throw new Error('normal error');
     });
 
-    d1 = spa_page_transition2.createDfdFunc().path('./').setMainFunc(function (data) {
+    d1 = spa_page_transition2.createAjaxFunc('./', function (data) {
         console.log('d1 is called!');
     });
-    d2 = spa_page_transition2.createDfdFunc('KD2').path('./').setMainFunc(function (observer, data) {
+    d2 = spa_page_transition2.createAjaxFunc('./', function (observer, data) {
         console.log('d2 is called!');
         observer.trigger('KD2', 'D2');
     });
-    d3 = spa_page_transition2.createDfdFunc('KD3', 'KD33').path('./').setMainFunc(function (observer, data) {
+    d3 = spa_page_transition2.createAjaxFunc('./', function (observer, data) {
         console.log('d3 is called!');
         observer.trigger('KD3', 'D3').trigger('KD33', 'D33');
     });
-    ds = spa_page_transition2.createDfdFunc().path('./').setMainFunc(function (observer, data) {
+    ds = spa_page_transition2.createAjaxFunc('./', function (observer, data) {
         console.log('ds is called!');
         observer.stay();
     });
-    de = spa_page_transition2.createDfdFunc().path('./').setMainFunc(function (observer, data) {
+    de = spa_page_transition2.createAjaxFunc('./', function (observer, data) {
         console.log('de is called!');
         throw new Error('dfd error');
     });

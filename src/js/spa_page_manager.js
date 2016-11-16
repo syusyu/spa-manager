@@ -850,7 +850,7 @@ var spa_page_transition2 = (function () {
     'use strict';
     var
         addAction, initModule, spaLogger, getLogger,
-        createFunc, createDfdFunc, setMainFunc,
+        createFunc, createAjaxFunc,
         initialize, action, run;
 
 
@@ -862,14 +862,11 @@ var spa_page_transition2 = (function () {
     addAction = function (action_id, func_list) {
         return spa_page_transition2.model.addAction(action_id, func_list);
     };
-    createFunc = function (trigger_keys) {
+    createFunc = function (_main_func) {
         return spa_function.createFunc.apply(this, arguments);
     };
-    createDfdFunc = function (trigger_keys) {
-        return spa_function.createDfdFunc.apply(this, arguments);
-    };
-    setMainFunc = function (_main_func) {
-        return spa_function.setMainFunc(_main_func);
+    createAjaxFunc = function (path, params, main_func) {
+        return spa_function.createAjaxFunc.apply(this, arguments);
     };
     initModule = function () {
         spa_page_transition2.model.initModule();
@@ -878,8 +875,8 @@ var spa_page_transition2 = (function () {
     initialize = function () {
         return spa_page_transition2.model.initialize();
     };
-    action = function () {
-        return spa_page_transition2.model.addAction();
+    action = function (action_id, func_list) {
+        return spa_page_transition2.model.addAction(action_id, func_list);
     };
     run = function () {
         spa_page_transition2.model.run();
@@ -888,9 +885,9 @@ var spa_page_transition2 = (function () {
     return {
         getLogger: getLogger,
         addAction: addAction,
+        action: action,
         createFunc: createFunc,
-        createDfdFunc: createDfdFunc,
-        setMainFunc: setMainFunc,
+        createAjaxFunc: createAjaxFunc,
         initModule: initModule,
     }
 })();
@@ -937,16 +934,13 @@ spa_page_transition2.model = (function () {
         initialize, run;
 
     initModule = function () {
-        $.each(Object.keys(spa_page_transition.DATA_BIND_EVENT), function (idx_evt, key) {
-            $(spa_page_transition.DATA_BIND_EVENT).on(key, function (e, data) {
-                // console.log('model.receive.trigger.key=' + key + ', data=' + data + ', evt.keys=' + slist);
-            });
-        });
     };
+
     initialize = function () {
         actionList = [];
         return this;
     };
+
     run = function () {
         initModule();
     };
@@ -995,7 +989,7 @@ spa_page_transition2.model = (function () {
     };
 
     makeFuncList = function (func_list) {
-        if (initFunc && !isInitFuncExecuted) {
+        if (func_list && initFunc && !isInitFuncExecuted) {
             func_list.unshift(initFunc);
         }
         return func_list;
@@ -1025,8 +1019,8 @@ spa_page_transition2.model = (function () {
 var spa_function = (function () {
     'use strict';
     var
-        protoFunc, protoDfdFunc,
-        createFunc, createDfdFunc;
+        protoFunc,
+        createFunc, createAjaxFunc;
 
     protoFunc = {
         execute: function () {
@@ -1051,9 +1045,11 @@ var spa_function = (function () {
             this.stays = true;
         },
 
+        error: function (err) {
+            throw new Error(err);
+        },
+
         trigger: function (key, val) {
-            // spa_page_transition2.getLogger().debug('trigger.key', key, 'val', val);
-            // $(spa_page_transition.DATA_BIND_EVENT).trigger(key, val);
             spa_page_transition.shell.evt_data_bind_view.trigger(key, val);
             return this;
         },
@@ -1064,39 +1060,38 @@ var spa_function = (function () {
         },
     };
 
-    createFunc = function (trigger_keys) {
+    createFunc = function (_main_func) {
         var
-            i, trigger_key,
-            len = arguments.length;
+            i, arg_main_func;
 
-        for (i = 0; i < len; i++) {
-            trigger_key = arguments[i];
-            if (trigger_key) {
-                spa_page_transition.addEvent(trigger_key);
+        for (i = 0; i < arguments.length; i++) {
+            if (typeof(arguments[i]) === 'function') {
+                arg_main_func = arguments[i];
+                break;
             }
         }
-        return Object.create(protoFunc);
+        if (!arg_main_func) {
+            throw new Error('No main_func is set.');
+        }
+        return Object.create(protoFunc).setMainFunc(arg_main_func);
     };
 
-    createDfdFunc = function (trigger_keys) {
+    createAjaxFunc = function (_path, _main_func) {
         var
             res = createFunc.apply(this, arguments);
+
+        res.path = _path;
 
         res.execute = function () {
             var
                 d = $.Deferred(),
                 this_obj = this;
 
-            spa_page_data.serverAccessor(this._path, this._params).then(function (data) {
+            spa_page_data.serverAccessor(_path, this._params).then(function (data) {
                 d = this_obj.exec_main_func(this_obj);
             });
 
             return d.promise();
-        };
-
-        res.path = function (_path) {
-            this._path = _path;
-            return this;
         };
 
         res.params = function (_params) {
@@ -1109,6 +1104,6 @@ var spa_function = (function () {
 
     return {
         createFunc: createFunc,
-        createDfdFunc: createDfdFunc,
+        createAjaxFunc: createAjaxFunc,
     }
 })();
