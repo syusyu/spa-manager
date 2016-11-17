@@ -1,4 +1,4 @@
-describe('TEST | spa_page_transition.shell_spec', function () {
+describe('TEST | spa_page_transition.shell', function () {
 
     describe('anchor.createSelfAnchorMap', function () {
         var
@@ -14,7 +14,7 @@ describe('TEST | spa_page_transition.shell_spec', function () {
         });
     });
 
-    describe('bindView.getToggleClassList', function () {
+    describe('data_bind.evt_data_bind_view.get_toggle_class_list', function () {
         var
             param_list, expected_list, actual;
 
@@ -43,34 +43,34 @@ describe('TEST | spa_page_transition.shell_spec', function () {
         expected_list = [
             [
                 {
-                    'toggle_action_type': spa_page_transition.shell.ENUM_TOGGLE_ACTION_TYPE.REMOVE,
+                    'toggle_action_type': spa_page_transition.data_bind.ENUM_TOGGLE_ACTION_TYPE.REMOVE,
                     'toggle_class': 'btn-disable',
                 },
                 {
-                    'toggle_action_type': spa_page_transition.shell.ENUM_TOGGLE_ACTION_TYPE.ADD,
+                    'toggle_action_type': spa_page_transition.data_bind.ENUM_TOGGLE_ACTION_TYPE.ADD,
                     'toggle_class': 'btn-enable',
                 },
             ],
             [
                 {
-                    'toggle_action_type': spa_page_transition.shell.ENUM_TOGGLE_ACTION_TYPE.ADD,
+                    'toggle_action_type': spa_page_transition.data_bind.ENUM_TOGGLE_ACTION_TYPE.ADD,
                     'toggle_class': 'btn-disable',
                 },
                 {
-                    'toggle_action_type': spa_page_transition.shell.ENUM_TOGGLE_ACTION_TYPE.REMOVE,
+                    'toggle_action_type': spa_page_transition.data_bind.ENUM_TOGGLE_ACTION_TYPE.REMOVE,
                     'toggle_class': 'btn-enable',
                 },
             ],
             [
                 {
-                    'toggle_action_type': spa_page_transition.shell.ENUM_TOGGLE_ACTION_TYPE.REMOVE,
+                    'toggle_action_type': spa_page_transition.data_bind.ENUM_TOGGLE_ACTION_TYPE.REMOVE,
                     'toggle_class': 'btn-disable',
                 },
 
             ],
             [
                 {
-                    'toggle_action_type': spa_page_transition.shell.ENUM_TOGGLE_ACTION_TYPE.ADD,
+                    'toggle_action_type': spa_page_transition.data_bind.ENUM_TOGGLE_ACTION_TYPE.ADD,
                     'toggle_class': 'btn-disable',
                 },
 
@@ -79,7 +79,7 @@ describe('TEST | spa_page_transition.shell_spec', function () {
 
         $.each(param_list, function (idx, param) {
             it('idx=' + idx, function () {
-                actual = spa_page_transition.shell.bindView.getToggleClassList(
+                actual = spa_page_transition.data_bind.evt_data_bind_view.get_toggle_class_list(
                     param.trigger_key, true, param.trigger_status_on, param.data_bind_toggle_attr);
                 expect(actual).toEqual(expected_list[idx]);
             });

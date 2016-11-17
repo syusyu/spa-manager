@@ -1,4 +1,4 @@
-describe('TEST | spa_function', function () {
+describe('TEST | spa_page_transition.model', function () {
     var
         n1, n2, n3, ns, ne,
         d1, d2, d3, ds, de,
@@ -197,6 +197,5 @@ describe('TEST | spa_function', function () {
                 obj.expected.error ? expect(page.renderErrorPage).toHaveBeenCalled() : expect(page.renderErrorPage).not.toHaveBeenCalled();
             });
         });
-
     });
 });

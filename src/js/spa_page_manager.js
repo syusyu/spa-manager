@@ -129,9 +129,6 @@ spa_page_transition.model = (function () {
 
     addAction = function (action_id, next_page_cls, func_list) {
         actionList.push(actionFactory(action_id, next_page_cls, func_list));
-        for (var i = 0; i < actionList.length; i++) {
-            spa_page_transition.getLogger().debug('action_id', action_id, 'f_len', func_list.length);
-        }
     };
 
     findAction = function (action_id) {
