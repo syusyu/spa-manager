@@ -6,37 +6,60 @@
 var spa_page_transition = (function () {
     'use strict';
     var
-        initModule, addAction, addEvent, prepareActivation, spaLogger, getLogger,
-        DATA_BIND_EVENT = {};
+        addAction, createFunc, createAjaxFunc, initialize, debugMode, run,
+        spaLogger, getLogger,
+        isDebugMode;
+
+    /**
+     * Register function to be bound with action
+     * @param _main_func
+     * @returns {*}
+     */
+    createFunc = function (_main_func) {
+        return spa_page_transition.func.createFunc.apply(this, arguments);
+    };
+
+    /**
+     * Register ajax function to be bound with action
+     * @param path
+     * @param params
+     * @param call_back_func
+     * @returns {*}
+     */
+    createAjaxFunc = function (path, params, call_back_func) {
+        return spa_page_transition.func.createAjaxFunc.apply(this, arguments);
+    };
 
     /**
      * Add action
      * @param action_id: compulsory
      * @param next_page_cls: compulsory
-     * @param main_proc: compulsory, Must return jQuery.Deferred().resolve(action).promise() only when using post_proc.
-     * @param post_proc: optional
+     * @param func_list: optional
      */
-    addAction = function (action_id, next_page_cls, main_proc, post_proc) {
-        spa_page_transition.model.addAction(action_id, next_page_cls, main_proc, post_proc);
+    addAction = function (action_id, next_page_cls, func_list) {
+        spa_page_transition.model.addAction(action_id, next_page_cls, func_list);
+        return spa_page_transition;
     };
 
-    addEvent = function (event_id) {
-        DATA_BIND_EVENT[event_id] = null;
+    initialize = function () {
+        spaLogger = spa_log.createLogger(isDebugMode, 'SPA.LOG ');
+        return spa_page_transition.model.initialize.apply(this, arguments);
+        return spa_page_transition;
     };
 
-    prepareActivation = function (dfd_activation) {
-        spa_page_transition.shell.prepareActivation(dfd_activation);
+    debugMode = function () {
+        isDebugMode = true;
+        return spa_page_transition;
+    };
+
+    run = function () {
+        spa_page_transition.shell.initModule();
+        spa_page_transition.data_bind.initModule();
+        spa_page_transition.model.run();
     };
 
     getLogger = function () {
         return spaLogger;
-    };
-
-    initModule = function ($container, is_debug_mode) {
-        spaLogger = spa_log.createLogger(is_debug_mode, 'SPA.LOG ');
-        spa_page_transition.model.initModule();
-        spa_page_transition.shell.initModule($container);
-        spa_data_bind.initModule();
     };
 
     /**
@@ -56,12 +79,299 @@ var spa_page_transition = (function () {
     }
 
     return {
-        initModule: initModule,
         addAction: addAction,
-        addEvent: addEvent,
-        prepareActivation: prepareActivation,
         getLogger: getLogger,
-        DATA_BIND_EVENT: DATA_BIND_EVENT,
+        createFunc: createFunc,
+        createAjaxFunc: createAjaxFunc,
+        debugMode: debugMode,
+        initialize: initialize,
+        run: run,
+    };
+}());
+
+
+spa_page_transition.model = (function () {
+    'use strict';
+    var
+        actionProto, actionFactory,
+        addAction, findAction, execAction, startAction,
+        actionList = [],
+        initializationFunc, initialize, setInitializationFunc, isInitialized,
+        execFunc, makeFuncList,
+        run;
+
+    /**
+     * Action prototype
+     */
+    actionProto = {
+        actionId: '',
+        nextPageCls: '',
+        funcList: []
+    };
+
+    /**
+     * Create actionProto
+     * @param action_id: compulsory
+     * @param next_page_cls: compulsory
+     * @param main_proc: optional
+     * @param post_proc: optional
+     * @returns {actionProto|*}
+     */
+    actionFactory = function (action_id, next_page_cls, func_list) {
+        var
+            action = Object.create(actionProto);
+
+        action.actionId = action_id;
+        action.nextPageCls = next_page_cls;
+        action.funcList = func_list;
+        return action;
+    };
+
+    addAction = function (action_id, next_page_cls, func_list) {
+        actionList.push(actionFactory(action_id, next_page_cls, func_list));
+        for (var i = 0; i < actionList.length; i++) {
+            spa_page_transition.getLogger().debug('action_id', action_id, 'f_len', func_list.length);
+        }
+    };
+
+    findAction = function (action_id) {
+        var result;
+
+        action_id = !action_id ? 'initialize' : action_id;
+        result = actionList.filter(function (obj, idx) {
+            return obj.actionId === action_id
+        })[0];
+        if (!result) {
+            throw new Error('no action... action_id=' + action_id);
+        }
+        return result;
+    };
+
+    /**
+     * Initialize necesary properties
+     * @param initialize_func optional
+     * @returns {initialize}
+     */
+    initialize = function (initialize_func) {
+        setInitializationFunc(initialize_func);
+        actionList = [];
+        return this;
+    };
+
+    setInitializationFunc = function (initialize_func) {
+        initializationFunc = initialize_func;
+        if (initialize_func) {
+            initializationFunc.initialize_func();
+        }
+    };
+
+    run = function () {
+        if (!initializationFunc) {
+            startAction();
+        }
+    };
+
+    startAction = function () {
+        $(window).trigger('hashchange');
+    };
+
+    execAction = function (action_id) {
+        var
+            i = 0,
+            promise = $.Deferred().resolve().promise(),
+            action = findAction(action_id),
+            func_list = makeFuncList(action.funcList);
+
+        if (func_list && func_list.length > 0) {
+            return execFunc(action.funcList, promise, i, false);
+        } else {
+            return $.Deferred().resolve().promise();
+        }
+    };
+
+    execFunc = function (func_list, promise, idx, is_initialize) {
+        promise.then(function (data) {
+            var
+                func = func_list[idx];
+
+            promise = func.execute();
+            if (is_initialize) {
+                startAction();
+            }
+            if (++idx < func_list.length) {
+                promise = execFunc(func_list, promise, idx, func.is_initialize_func);
+            }
+            return promise;
+        }, function (data) {
+            return $.Deferred().reject(data).promise();
+        });
+        return promise;
+    };
+
+    makeFuncList = function (func_list) {
+        if (func_list && initializationFunc && !isInitialized) {
+            func_list.unshift(initializationFunc);
+            isInitialized = true;
+        }
+        return func_list;
+    };
+
+    return {
+        addAction: addAction,
+        execAction: execAction,
+        run: run,
+        initialize: initialize,
+    };
+}());
+
+
+spa_page_transition.func = (function () {
+    'use strict';
+    var
+        protoFunc,
+        createFunc, createAjaxFunc;
+
+    protoFunc = {
+        execute: function () {
+            return this.exec_main_func(this).promise();
+        },
+
+        exec_main_func: function (this_obj) {
+            try {
+                this_obj.main_func(this);
+            } catch (e) {
+                // console.warn(e);
+                return $.Deferred().reject();
+            }
+            if (this_obj.stays) {
+                return $.Deferred().reject({'stays': this_obj.stays});
+            } else {
+                return $.Deferred().resolve();
+            }
+        },
+
+        initialize_func: function (_is_initialize_func) {
+            this.is_initialize_func = _is_initialize_func;
+        },
+
+        stay: function () {
+            this.stays = true;
+        },
+
+        error: function (err) {
+            throw new Error(err);
+        },
+
+        trigger: function (key, val) {
+            spa_page_transition.shell.evt_data_bind_view.trigger(key, val);
+            return this;
+        },
+    };
+
+    createFunc = function (_main_func) {
+        var
+            i, arg_main_func, res;
+
+        for (i = 0; i < arguments.length; i++) {
+            if (typeof(arguments[i]) === 'function') {
+                arg_main_func = arguments[i];
+                break;
+            }
+        }
+        if (!arg_main_func) {
+            throw new Error('No main_func is set.');
+        }
+        res = Object.create(protoFunc);
+        res.main_func = arg_main_func;
+        return res;
+    };
+
+    createAjaxFunc = function (_path, _main_func) {
+        var
+            res = createFunc.apply(this, arguments);
+
+        res.path = _path;
+
+        res.execute = function () {
+            var
+                d = $.Deferred(),
+                this_obj = this;
+
+            spa_page_data.serverAccessor(_path, this._params).then(function (data) {
+                d = this_obj.exec_main_func(this_obj);
+            });
+
+            return d.promise();
+        };
+
+        res.params = function (_params) {
+            this._params = _params;
+            return this;
+        };
+
+        return res;
+    };
+
+    return {
+        createFunc: createFunc,
+        createAjaxFunc: createAjaxFunc,
+    }
+})();
+
+var spa_page_data = (function () {
+    'use strict';
+    var
+        serverAccessor, doAccessServer;
+
+    /**
+     * The callback function should return data.spa_status === 'succeeded'
+     * @param filePath: Url of server
+     * @param send_params: Parameters for send to server
+     * @param succeeded_func
+     * @param failed_func
+     * @returns {*<T>|*}
+     */
+    doAccessServer = function (filePath, send_params, succeeded_func, failed_func) {
+        var
+            dfd = $.Deferred();
+
+        serverAccessor(filePath, send_params).done(function (data) {
+            succeeded_func(data);
+            dfd.resolve();
+        }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
+            if (errorThrown) {
+                console.error(errorThrown.message);
+            }
+            if (failed_func) {
+                failed_func(XMLHttpRequest);
+            } else {
+                spa_page_transition.shell.renderErrorPage(XMLHttpRequest.message);
+            }
+            dfd.reject('Connection error occurred.');
+        });
+
+        return dfd.promise();
+    };
+
+    serverAccessor = function (filePath, data) {
+        var
+            dfd = $.Deferred();
+
+        $.ajax({
+            url: filePath,
+            type: 'get',
+            data: data,
+            dataType: 'json',
+            success: dfd.resolve,
+            error: dfd.reject
+        });
+
+        return dfd.promise();
+    };
+
+    return {
+        doAccessServer: doAccessServer,
+        serverAccessor: serverAccessor,
     };
 }());
 
@@ -69,9 +379,7 @@ var spa_page_transition = (function () {
 spa_page_transition.shell = (function () {
     'use strict';
     var
-        $errorDetailMessage,
         anchorGetter, bindView,
-        dfdActivation, prepareActivation,
         execAction, renderPage, renderErrorPage, doRenderPage,
         initModule;
 
@@ -173,7 +481,11 @@ spa_page_transition.shell = (function () {
         spa_page_transition.model.execAction(anchor_map).then(function (data) {
             renderPage(data);
         }, function (data) {
-            renderErrorPage(data.callback_data);
+            if (data && data.stays) {
+                return;
+            } else {
+                renderErrorPage(data);
+            }
         });
     };
 
@@ -184,12 +496,11 @@ spa_page_transition.shell = (function () {
         doRenderPage(data.action.nextPageCls);
     };
 
-    renderErrorPage = function (message) {
-        console.error(message);
-        if ($errorDetailMessage) {
-            $errorDetailMessage.append(message);
-            doRenderPage('spa-error');
+    renderErrorPage = function (data) {
+        if (data.error_mes) {
+            console.error(data.error_mes);
         }
+        doRenderPage('spa-error');
     };
 
     doRenderPage = function (pageCls) {
@@ -217,18 +528,10 @@ spa_page_transition.shell = (function () {
         }
     };
 
-    prepareActivation = function (dfd_activation) {
-        dfdActivation = dfd_activation;
-    };
-
-    initModule = function ($container) {
+    initModule = function () {
         $(window).on('hashchange', function () {
             execAction($.uriAnchor.makeAnchorMap());
         });
-
-        if ($container) {
-            $errorDetailMessage = $container.find('#error-detail-message');
-        }
 
         $('*[data-action-click-id]').on('click', function (e) {
             $.uriAnchor.setAnchor(anchorGetter.createAnchorMap($(this), 'data-action-click-id', 'data-action-click-params'));
@@ -246,15 +549,9 @@ spa_page_transition.shell = (function () {
                 history.pushState(null, null, location.pathname);
             });
         });
-
-        $.when(dfdActivation).then(function (data) {
-            spa_page_transition.getLogger().debug('SPA starts.');
-            $(window).trigger('hashchange');
-        })
     };
 
     return {
-        prepareActivation: prepareActivation,
         renderErrorPage: renderErrorPage,
         initModule: initModule,
         //VisibleForTesting
@@ -263,212 +560,7 @@ spa_page_transition.shell = (function () {
     };
 }());
 
-spa_page_transition.model = (function () {
-    'use strict';
-    var
-        actionProto, actionFactory,
-        addAction, findAction, execAction,
-        initModule,
-        actionList = [];
-
-    /**
-     * Action prototype
-     * @type {{execMainProc: actionProto.execMainProc}}
-     */
-    actionProto = {
-        execMainProc: function (params) {
-            var
-                dfd = $.Deferred(),
-                main_proc_res,
-                this_action = this;
-
-            if (this.hasOwnProperty('preProc')) {
-                this.preProc();
-            }
-            if (this.hasOwnProperty('mainProc')) {
-                main_proc_res = this.mainProc(params);
-            }
-            $.when(main_proc_res).then(function (data) {
-                dfd.resolve({action: this_action, callback_data: data});
-            }, function (data) {
-                dfd.reject({action: this_action, callback_data: data});
-            });
-
-            return dfd.promise();
-        }
-    };
-
-    /**
-     * Create actionProto
-     * @param action_id: compulsory
-     * @param next_page_cls: compulsory
-     * @param main_proc: optional
-     * @param post_proc: optional
-     * @returns {actionProto|*}
-     */
-    actionFactory = function (action_id, next_page_cls, main_proc, pre_proc) {
-        var
-            action = Object.create(actionProto);
-
-        action.actionId = action_id;
-        action.nextPageCls = next_page_cls;
-        if (pre_proc) {
-            action.preProc = pre_proc;
-        }
-        if (main_proc) {
-            action.mainProc = main_proc;
-        }
-        return action;
-    };
-
-    findAction = function (action_id) {
-        var result;
-
-        action_id = !action_id ? 'initialize' : action_id;
-        result = actionList.filter(function (obj, idx) {
-            return obj.actionId === action_id
-        })[0];
-        if (!result) {
-            throw new Error('no action... action_id=' + action_id);
-        }
-        return result;
-    };
-
-    execAction = function (anchor_map) {
-        var
-            result,
-            action = findAction(anchor_map['action']);
-        try {
-            result = action.execMainProc(anchor_map);
-        } catch (e) {
-            result = $.Deferred().reject({'callback_data': e}).promise();
-        }
-        return result;
-    };
-
-    addAction = function (action_id, next_page_cls, main_proc, pre_proc) {
-        actionList.push(actionFactory(action_id, next_page_cls, main_proc, pre_proc));
-    };
-
-    initModule = function () {
-    };
-
-    return {
-        addAction: addAction,
-        execAction: execAction,
-        initModule: initModule,
-    };
-}());
-
-
-var spa_page_data = (function () {
-    'use strict';
-    var
-        serverAccessor, doAccessServer;
-
-    /**
-     * The callback function should return data.spa_status === 'succeeded'
-     * @param filePath: Url of server
-     * @param send_params: Parameters for send to server
-     * @param succeeded_func
-     * @param failed_func
-     * @returns {*<T>|*}
-     */
-    doAccessServer = function (filePath, send_params, succeeded_func, failed_func) {
-        var
-            dfd = $.Deferred();
-
-        serverAccessor(filePath, send_params).done(function (data) {
-            succeeded_func(data);
-            dfd.resolve();
-        }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
-            if (errorThrown) {
-                console.error(errorThrown.message);
-            }
-            if (failed_func) {
-                failed_func(XMLHttpRequest);
-            } else {
-                spa_page_transition.shell.renderErrorPage(XMLHttpRequest.message);
-            }
-            dfd.reject('Connection error occurred.');
-        });
-
-        return dfd.promise();
-    };
-
-    serverAccessor = function (filePath, data) {
-        var
-            dfd = $.Deferred();
-
-        $.ajax({
-            url: filePath,
-            type: 'get',
-            data: data,
-            dataType: 'json',
-            success: dfd.resolve,
-            error: dfd.reject
-        });
-
-        return dfd.promise();
-    };
-
-    return {
-        doAccessServer: doAccessServer,
-        serverAccessor: serverAccessor,
-    };
-}());
-
-var spa_log = (function () {
-    'use strict';
-    var
-        loggerProto, createLogger;
-
-    loggerProto = {
-        isDebugMode: true,
-        logPrefix: '',
-        debug: function () {
-            var
-                log, i, is_left, is_right, is_last,
-                result = '';
-
-            if (arguments.length < 1) {
-                console.error('No arguments...')
-                return;
-            }
-            if (!this.isDebugMode) {
-                return;
-            }
-
-            result += this.logPrefix + ' ';
-
-            for (i = 0; i < arguments.length; i++) {
-                is_last = (i === arguments.length - 1);
-                is_right = (i % 2 === 1);
-
-                log = (is_right ? ' = ' : '');
-                log += arguments[i] instanceof Object ? JSON.stringify(arguments[i], null, '\t') : arguments[i];
-                log += (is_right && !is_last ? ', ' : '');
-
-                result += log;
-            }
-
-            console.log(result);
-        }
-    };
-
-    createLogger = function (is_debug_mode, log_prefix) {
-        var logger = Object.create(loggerProto);
-        logger.isDebugMode = is_debug_mode;
-        logger.logPrefix = log_prefix || '';
-        return logger;
-    };
-
-    return {
-        createLogger: createLogger,
-    }
-})();
-
-var spa_data_bind = (function () {
+spa_page_transition.data_bind = (function () {
     'use strict';
     var
         ENUM_TOGGLE_ACTION_TYPE = {ADD: 'ADD', REMOVE: 'REMOVE', TOGGLE: 'TOGGLE'},
@@ -478,22 +570,22 @@ var spa_data_bind = (function () {
 
     evt_data_bind_view = (function () {
         var
-            init_bind_prop_map, _create_bind_prop_map, _bind_prop_map,
-            get_all_prop_map,
-            settle_bind_val, _extract_val, _get_bind_val, _format_bind_val,
-            each_attr_type, each_attr_type_selectors,
+            _init_bind_prop_map, _create_bind_prop_map, _bind_prop_map,
+            _get_all_prop_map,
+            _settle_bind_val, _extract_val, _get_bind_val, _format_bind_val,
+            _each_attr_type, _each_attr_type_selectors,
 
-            create_loop_element, _do_find_loop_element, _clone_loop_children, _replace_cloned_element_attr,
+            _create_loop_element, _do_find_loop_element, _clone_loop_children, _replace_cloned_element_attr,
 
             get_toggle_class_list,
             trigger,
 
             BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop'];
 
-        init_bind_prop_map = function (key, data) {
+        _init_bind_prop_map = function (key, data) {
             $('[' + BIND_ATTR_REPLACED + ']').each(function (idx, el) {
                 $(el).remove();
-            })
+            });
             _bind_prop_map = {};
             _create_bind_prop_map(key, data);
             return this;
@@ -522,7 +614,7 @@ var spa_data_bind = (function () {
             });
         };
 
-        get_all_prop_map = function () {
+        _get_all_prop_map = function () {
             return _bind_prop_map;
         };
 
@@ -573,7 +665,7 @@ var spa_data_bind = (function () {
             return val;
         };
 
-        settle_bind_val = function ($el, attr, data, prop_key) {
+        _settle_bind_val = function ($el, attr, data, prop_key) {
             var
                 format = $el.attr('data-bind-format'),
                 val = _format_bind_val(data, prop_key, format);
@@ -590,13 +682,13 @@ var spa_data_bind = (function () {
             $el.show();
         };
 
-        each_attr_type = function (func) {
+        _each_attr_type = function (func) {
             $.each(BIND_ATTR_TYPES, function (idx, el) {
                 func('data-bind-' + el, el);
             });
         };
 
-        each_attr_type_selectors = function () {
+        _each_attr_type_selectors = function () {
             var result = '';
             $.each(BIND_ATTR_TYPES, function (idx, el) {
                 result += (idx > 0 ? ',' : '') + '[data-bind-' + el + ']';
@@ -607,7 +699,7 @@ var spa_data_bind = (function () {
         /**
          * @param parent, should not be loop element.
          */
-        create_loop_element = function (parent, data, key) {
+        _create_loop_element = function (parent, data, key) {
             $(parent).children().each(function (idx, el) {
                 _do_find_loop_element(el, data, key);
             });
@@ -624,7 +716,7 @@ var spa_data_bind = (function () {
                     _do_find_loop_element(el_cloned_child, data, key);
                 });
             } else if ($(el).children()) {
-                create_loop_element(el, data, key);
+                _create_loop_element(el, data, key);
             }
         };
 
@@ -633,7 +725,7 @@ var spa_data_bind = (function () {
                 i, $el_cloned,
                 list = _get_bind_val(data, loop_prop_key),
                 cloned_elements = [], clone_target_elements = [],
-                bind_attr_type_selectors = each_attr_type_selectors();
+                bind_attr_type_selectors = _each_attr_type_selectors();
 
             for (i = 0; i < list.length; i++) {
                 $(el).children().each(function (idx, el_child) {
@@ -658,7 +750,7 @@ var spa_data_bind = (function () {
         };
 
         _replace_cloned_element_attr = function ($el, loop_prop_key, i) {
-            each_attr_type(function (bind_attr_type, attr_type) {
+            _each_attr_type(function (bind_attr_type, attr_type) {
                 var
                     bind_attr = $el.attr(bind_attr_type);
 
@@ -724,24 +816,24 @@ var spa_data_bind = (function () {
                 return true;
             }
 
-            init_bind_prop_map(key, data);
-            all_props = get_all_prop_map();
-            bind_attr_type_selectors = each_attr_type_selectors();
+            _init_bind_prop_map(key, data);
+            all_props = _get_all_prop_map();
+            bind_attr_type_selectors = _each_attr_type_selectors();
 
-            create_loop_element($('body'), data, key);
+            _create_loop_element($('body'), data, key);
 
             $(bind_attr_type_selectors).each(function (idx_bind, obj) {
                 var
                     el_prop_key,
                     $this = $(this);
 
-                each_attr_type(function (bind_attr, attr) {
+                _each_attr_type(function (bind_attr, attr) {
                     el_prop_key = $this.attr(bind_attr);
                     if (!el_prop_key) {
                         return true;
                     }
                     if (all_props[el_prop_key]) {
-                        settle_bind_val($this, attr, data, el_prop_key);
+                        _settle_bind_val($this, attr, data, el_prop_key);
                     } else if (!$this.attr('data-bind-loop')) {
                         $this.hide();
                     }
@@ -783,12 +875,6 @@ var spa_data_bind = (function () {
         };
 
         return {
-            init_bind_prop_map: init_bind_prop_map,
-            get_all_prop_map: get_all_prop_map,
-            settle_bind_val: settle_bind_val,
-            each_attr_type: each_attr_type,
-            create_loop_element: create_loop_element,
-            each_attr_type_selectors: each_attr_type_selectors,
             get_toggle_class_list: get_toggle_class_list,
             trigger: trigger,
 
@@ -798,12 +884,6 @@ var spa_data_bind = (function () {
     })();
 
     initModule = function () {
-        $.each(Object.keys(spa_page_transition.DATA_BIND_EVENT), function (idx_evt, key) {
-            $(spa_page_transition.DATA_BIND_EVENT).on(key, function (e, data) {
-                evt_data_bind_view.trigger(key, data);
-            });
-        });
-
         $('[data-view-toggle-trigger]').on('click', function (e_toggle) {
             var
                 trigger_key = $(this).attr('data-view-toggle-trigger'),
@@ -845,265 +925,52 @@ var spa_data_bind = (function () {
     }
 })();
 
-
-var spa_page_transition2 = (function () {
+var spa_log = (function () {
     'use strict';
     var
-        addAction, initModule, spaLogger, getLogger,
-        createFunc, createAjaxFunc,
-        initialize, action, run;
+        loggerProto, createLogger;
 
-
-    spaLogger = spa_log.createLogger(true, 'SPA2 ');
-    getLogger = function () {
-        return spaLogger;
-    };
-
-    addAction = function (action_id, func_list) {
-        return spa_page_transition2.model.addAction(action_id, func_list);
-    };
-    createFunc = function (_main_func) {
-        return spa_function.createFunc.apply(this, arguments);
-    };
-    createAjaxFunc = function (path, params, main_func) {
-        return spa_function.createAjaxFunc.apply(this, arguments);
-    };
-    initModule = function () {
-        spa_page_transition2.model.initModule();
-    };
-
-    initialize = function () {
-        return spa_page_transition2.model.initialize();
-    };
-    action = function (action_id, func_list) {
-        return spa_page_transition2.model.addAction(action_id, func_list);
-    };
-    run = function () {
-        spa_page_transition2.model.run();
-    };
-
-    return {
-        getLogger: getLogger,
-        addAction: addAction,
-        action: action,
-        createFunc: createFunc,
-        createAjaxFunc: createAjaxFunc,
-        initModule: initModule,
-    }
-})();
-
-spa_page_transition2.shell = (function () {
-    'use strict';
-    var
-        execAction, renderPage, renderErrorPage;
-
-    execAction = function (anchor_map) {
-        spa_page_transition2.model.execAction(anchor_map).then(function (data) {
-            renderPage(data);
-        }, function (data) {
-            if (data && data.stays) {
-                return;
-            } else {
-                // renderErrorPage(data.callback_data);
-                renderErrorPage();
-            }
-        });
-    };
-
-    renderPage = function (data) {
-        console.log('### result ### Page rendered!')
-    };
-
-    renderErrorPage = function (data) {
-        console.log('### result ### Error page rendered!')
-    };
-
-    return {
-        execAction: execAction,
-    }
-})();
-
-spa_page_transition2.model = (function () {
-    'use strict';
-    var
-        addAction, protoAction, execAction, execFunc,
-        initFunc, setInitFunc, isInitFuncExecuted, makeFuncList,
-        actionList = [],
-
-        initModule,
-        initialize, run;
-
-    initModule = function () {
-    };
-
-    initialize = function () {
-        actionList = [];
-        return this;
-    };
-
-    run = function () {
-        initModule();
-    };
-
-    protoAction = {};
-
-    addAction = function (action_id, func_list) {
-        var
-            action = Object.create(protoAction);
-
-        action.actionId = action_id;
-        action.funcList = func_list;
-        actionList.push(action);
-        return this;
-    };
-
-    setInitFunc = function (init_func) {
-        initFunc = init_func;
-    };
-
-    execAction = function (action_id) {
-        var
-            i = 0,
-            promise = $.Deferred().resolve().promise(),
-            action = findAction(action_id),
-            func_list = makeFuncList(action.funcList);
-
-        if (func_list && func_list.length > 0) {
-            return execFunc(action.funcList, promise, i);
-        } else {
-            return $.Deferred().resolve().promise();
-        }
-    };
-
-    execFunc = function (func_list, promise, idx) {
-        promise.then(function (data) {
-            promise = func_list[idx].execute();
-            if (++idx < func_list.length) {
-                promise = execFunc(func_list, promise, idx);
-            }
-            return promise;
-        }, function (data) {
-            return $.Deferred().reject(data).promise();
-        });
-        return promise;
-    };
-
-    makeFuncList = function (func_list) {
-        if (func_list && initFunc && !isInitFuncExecuted) {
-            func_list.unshift(initFunc);
-        }
-        return func_list;
-    };
-
-    var findAction = function (action_id) {
-        var i;
-        for (i = 0; i < actionList.length; i++) {
-            if (action_id === actionList[i].actionId) {
-                return actionList[i];
-            }
-        }
-    };
-
-    return {
-        initModule: initModule,
-        addAction: addAction,
-        setInitFunc: setInitFunc,
-        execAction: execAction,
-
-        initialize: initialize,
-        run: run,
-    }
-})
-();
-
-var spa_function = (function () {
-    'use strict';
-    var
-        protoFunc,
-        createFunc, createAjaxFunc;
-
-    protoFunc = {
-        execute: function () {
-            return this.exec_main_func(this).promise();
-        },
-
-        exec_main_func: function (this_obj) {
-            try {
-                this_obj.main_func(this);
-            } catch (e) {
-                // console.warn(e);
-                return $.Deferred().reject();
-            }
-            if (this_obj.stays) {
-                return $.Deferred().reject({'stays': this_obj.stays});
-            } else {
-                return $.Deferred().resolve();
-            }
-        },
-
-        stay: function () {
-            this.stays = true;
-        },
-
-        error: function (err) {
-            throw new Error(err);
-        },
-
-        trigger: function (key, val) {
-            spa_page_transition.shell.evt_data_bind_view.trigger(key, val);
-            return this;
-        },
-
-        setMainFunc: function (_main_func) {
-            this.main_func = _main_func;
-            return this;
-        },
-    };
-
-    createFunc = function (_main_func) {
-        var
-            i, arg_main_func;
-
-        for (i = 0; i < arguments.length; i++) {
-            if (typeof(arguments[i]) === 'function') {
-                arg_main_func = arguments[i];
-                break;
-            }
-        }
-        if (!arg_main_func) {
-            throw new Error('No main_func is set.');
-        }
-        return Object.create(protoFunc).setMainFunc(arg_main_func);
-    };
-
-    createAjaxFunc = function (_path, _main_func) {
-        var
-            res = createFunc.apply(this, arguments);
-
-        res.path = _path;
-
-        res.execute = function () {
+    loggerProto = {
+        isDebugMode: true,
+        logPrefix: '',
+        debug: function () {
             var
-                d = $.Deferred(),
-                this_obj = this;
+                log, i, is_left, is_right, is_last,
+                result = '';
 
-            spa_page_data.serverAccessor(_path, this._params).then(function (data) {
-                d = this_obj.exec_main_func(this_obj);
-            });
+            if (arguments.length < 1) {
+                console.error('No arguments...')
+                return;
+            }
+            if (!this.isDebugMode) {
+                return;
+            }
 
-            return d.promise();
-        };
+            result += this.logPrefix + ' ';
 
-        res.params = function (_params) {
-            this._params = _params;
-            return this;
-        };
+            for (i = 0; i < arguments.length; i++) {
+                is_last = (i === arguments.length - 1);
+                is_right = (i % 2 === 1);
 
-        return res;
+                log = (is_right ? ' = ' : '');
+                log += arguments[i] instanceof Object ? JSON.stringify(arguments[i], null, '\t') : arguments[i];
+                log += (is_right && !is_last ? ', ' : '');
+
+                result += log;
+            }
+
+            console.log(result);
+        }
+    };
+
+    createLogger = function (is_debug_mode, log_prefix) {
+        var logger = Object.create(loggerProto);
+        logger.isDebugMode = is_debug_mode;
+        logger.logPrefix = log_prefix || '';
+        return logger;
     };
 
     return {
-        createFunc: createFunc,
-        createAjaxFunc: createAjaxFunc,
+        createLogger: createLogger,
     }
 })();

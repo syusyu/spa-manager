@@ -17,7 +17,7 @@ module.exports = function(config) {
     files: [
       'src/js/jquery/jquery.js',
       'src/js/spa_page_manager.js',
-      'test/spec/spa_page_manager_spec.js'
+      'test/spec/spa_page_transition.model_spec.js'
     ],
 
 
