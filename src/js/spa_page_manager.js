@@ -41,21 +41,25 @@ var spa_page_transition = (function () {
         return spa_page_transition;
     };
 
-    initialize = function () {
+    initialize = function (initialize_func) {
+        console.log('initialize.isDebugMode=' + isDebugMode);
         spaLogger = spa_log.createLogger(isDebugMode, 'SPA.LOG ');
         return spa_page_transition.model.initialize.apply(this, arguments);
         return spa_page_transition;
     };
 
-    debugMode = function () {
-        isDebugMode = true;
+    debugMode = function (is_debug_mode) {
+        isDebugMode = is_debug_mode;
         return spa_page_transition;
     };
 
-    run = function () {
-        spa_page_transition.shell.initModule();
-        spa_page_transition.data_bind.initModule();
-        spa_page_transition.model.run();
+    /**
+     * Make spa_page_transition starts.
+     * @param params: Optional. Pass map if necessary to use it in initilize func.
+     */
+    run = function (params) {
+        spa_page_transition.data_bind.run();
+        spa_page_transition.shell.run(params);
     };
 
     getLogger = function () {
@@ -96,8 +100,8 @@ spa_page_transition.model = (function () {
         actionProto, actionFactory,
         addAction, findAction, execAction, startAction,
         actionList = [],
-        initializationFunc, initialize, setInitializationFunc, isInitialized,
-        execFunc, makeFuncList,
+        initializationFunc, initialize,
+        execFunc,
         run;
 
     /**
@@ -131,72 +135,71 @@ spa_page_transition.model = (function () {
         actionList.push(actionFactory(action_id, next_page_cls, func_list));
     };
 
-    findAction = function (action_id) {
-        var result;
-
-        action_id = !action_id ? 'initialize' : action_id;
-        result = actionList.filter(function (obj, idx) {
-            return obj.actionId === action_id
-        })[0];
-        if (!result) {
-            throw new Error('no action... action_id=' + action_id);
-        }
-        return result;
-    };
-
     /**
      * Initialize necesary properties
      * @param initialize_func optional
      * @returns {initialize}
      */
     initialize = function (initialize_func) {
-        setInitializationFunc(initialize_func);
+        initializationFunc = initialize_func;
         actionList = [];
         return this;
     };
 
-    setInitializationFunc = function (initialize_func) {
-        initializationFunc = initialize_func;
-        if (initialize_func) {
-            initializationFunc.initialize_func();
-        }
-    };
+    // /**
+    //  * Make spa_page_transition starts.
+    //  * @param params: Optional. Pass map if necessary to use it in initilize func.
+    //  */
+    // run = function (params) {
+    //     if (!initializationFunc) {
+    //         startAction();
+    //     } else {
+    //         $.when(initializationFunc.execute(params)).then(startAction, startAction);
+    //     }
+    // };
+    //
+    // startAction = function () {
+    //     $(window).trigger('hashchange');
+    // };
 
-    run = function () {
-        if (!initializationFunc) {
-            startAction();
-        }
-    };
-
-    startAction = function () {
-        $(window).trigger('hashchange');
-    };
-
-    execAction = function (action_id) {
+    execAction = function (anchor_map) {
         var
             i = 0,
             promise = $.Deferred().resolve().promise(),
-            action = findAction(action_id),
-            func_list = makeFuncList(action.funcList);
+            action = findAction(anchor_map['action']);
 
-        if (func_list && func_list.length > 0) {
-            return execFunc(action.funcList, promise, i, false);
+        if (action !== 'none' && action.funcList && action.funcList.length > 0) {
+            return execFunc(action.funcList, anchor_map, promise, i, false);
         } else {
             return $.Deferred().resolve().promise();
         }
     };
 
-    execFunc = function (func_list, promise, idx, is_initialize) {
+    findAction = function (action_id) {
+        var
+            result;
+
+        if (!action_id) {
+            return 'none';
+        }
+        result = actionList.filter(function (obj, idx) {
+                return obj.actionId === action_id
+            })[0];
+
+        if (!result) {
+            throw new Error('Invalid action... action_id=' + action_id);
+        }
+        return result;
+    };
+
+    execFunc = function (func_list, anchor_map, promise, idx) {
         promise.then(function (data) {
             var
                 func = func_list[idx];
 
-            promise = func.execute();
-            if (is_initialize) {
-                startAction();
-            }
+            promise = func.execute(anchor_map);
             if (++idx < func_list.length) {
-                promise = execFunc(func_list, promise, idx, func.is_initialize_func);
+                promise = execFunc(func_list, anchor_map, promise, idx);
             }
             return promise;
         }, function (data) {
@@ -205,19 +208,12 @@ spa_page_transition.model = (function () {
         return promise;
     };
 
-    makeFuncList = function (func_list) {
-        if (func_list && initializationFunc && !isInitialized) {
-            func_list.unshift(initializationFunc);
-            isInitialized = true;
-        }
-        return func_list;
-    };
-
     return {
         addAction: addAction,
         execAction: execAction,
-        run: run,
+        // run: run,
         initialize: initialize,
+        initializationFunc: initializationFunc,
     };
 }());
 
@@ -226,16 +222,17 @@ spa_page_transition.func = (function () {
     'use strict';
     var
         protoFunc,
+        chooseArgByType,
         createFunc, createAjaxFunc;
 
     protoFunc = {
-        execute: function () {
-            return this.exec_main_func(this).promise();
+        execute: function (anchor_map) {
+            return this.exec_main_func(this, anchor_map).promise();
         },
 
-        exec_main_func: function (this_obj) {
+        exec_main_func: function (this_obj, anchor_map) {
             try {
-                this_obj.main_func(this);
+                this_obj.main_func(this_obj, anchor_map);
             } catch (e) {
                 // console.warn(e);
                 return $.Deferred().reject();
@@ -245,10 +242,6 @@ spa_page_transition.func = (function () {
             } else {
                 return $.Deferred().resolve();
             }
-        },
-
-        initialize_func: function (_is_initialize_func) {
-            this.is_initialize_func = _is_initialize_func;
         },
 
         stay: function () {
@@ -265,16 +258,21 @@ spa_page_transition.func = (function () {
         },
     };
 
+    chooseArgByType = function (args, type) {
+        var i;
+
+        for (i = 0; i < args.length; i++) {
+            if (typeof(args[i]) === type) {
+                return args[i];
+            }
+        }
+    };
+
     createFunc = function (_main_func) {
         var
             i, arg_main_func, res;
 
-        for (i = 0; i < arguments.length; i++) {
-            if (typeof(arguments[i]) === 'function') {
-                arg_main_func = arguments[i];
-                break;
-            }
-        }
+        arg_main_func = chooseArgByType(arguments, 'function');
         if (!arg_main_func) {
             throw new Error('No main_func is set.');
         }
@@ -283,27 +281,52 @@ spa_page_transition.func = (function () {
         return res;
     };
 
-    createAjaxFunc = function (_path, _main_func) {
+    createAjaxFunc = function (_path, _params, _main_func) {
         var
+            decide_path, decide_params,
             res = createFunc.apply(this, arguments);
 
-        res.path = _path;
+        res.path = chooseArgByType(arguments, 'string');
+        res.params = chooseArgByType(arguments, 'object');
 
-        res.execute = function () {
+        res.execute = function (anchor_map) {
             var
                 d = $.Deferred(),
                 this_obj = this;
 
-            spa_page_data.serverAccessor(_path, this._params).then(function (data) {
-                d = this_obj.exec_main_func(this_obj);
+            spa_page_data.serverAccessor(decide_path(this_obj), decide_params(this_obj)).then(function (data) {
+                d = this_obj.exec_main_func(this_obj, data, anchor_map);
+            }, function (data) {
+                d.reject(data);
             });
 
             return d.promise();
         };
 
-        res.params = function (_params) {
-            this._params = _params;
+        res.get_path = function (_get_path_func) {
+            this.get_path_func = _get_path_func;
             return this;
+        };
+
+        res.get_params = function (_get_params_func) {
+            this.get_params_func = _get_params_func;
+            console.log('get_params_func=' + _get_params_func);
+            return this;
+        };
+
+        decide_path = function (this_obj) {
+            var
+                res = this_obj.get_path_func ? this_obj.get_path_func() : this_obj.path;
+            if (!res) {
+                throw new Error('path is not set.');
+            }
+            console.log('decide_path.this_obj.path=' + this_obj.path);
+            return window.location.origin + res;
+        };
+
+        decide_params = function (this_obj) {
+            console.log('decide_params.this_obj.params=' + this_obj.params);
+            return this_obj.get_params_func ? this_obj.get_params_func() : this_obj.params;
         };
 
         return res;
@@ -354,6 +377,8 @@ var spa_page_data = (function () {
         var
             dfd = $.Deferred();
 
+        console.log('ajax.path=' + filePath + ', data=' + data);
+        spa_page_transition.getLogger('ajax.path', filePath, 'data', data);
         $.ajax({
             url: filePath,
             type: 'get',
@@ -377,8 +402,7 @@ spa_page_transition.shell = (function () {
     'use strict';
     var
         anchorGetter, bindView,
-        execAction, renderPage, renderErrorPage, doRenderPage,
-        initModule;
+        run, startAction, execAction, renderPage, renderErrorPage, doRenderPage;
 
     anchorGetter = (function () {
         var
@@ -474,6 +498,10 @@ spa_page_transition.shell = (function () {
         }
     })();
 
+    startAction = function () {
+        $(window).trigger('hashchange');
+    };
+
     execAction = function (anchor_map) {
         spa_page_transition.model.execAction(anchor_map).then(function (data) {
             renderPage(data);
@@ -525,7 +553,7 @@ spa_page_transition.shell = (function () {
         }
     };
 
-    initModule = function () {
+    run = function (params) {
         $(window).on('hashchange', function () {
             execAction($.uriAnchor.makeAnchorMap());
         });
@@ -546,11 +574,16 @@ spa_page_transition.shell = (function () {
                 history.pushState(null, null, location.pathname);
             });
         });
+
+        if (!spa_page_transition.model.initializationFunc) {
+            startAction();
+        } else {
+            $.when(spa_page_transition.model.initializationFunc.execute(params)).then(startAction, renderErrorPage);
+        }
     };
 
     return {
-        renderErrorPage: renderErrorPage,
-        initModule: initModule,
+        run: run,
         //VisibleForTesting
         anchorGetter: anchorGetter,
         bindView: bindView,
@@ -563,7 +596,7 @@ spa_page_transition.data_bind = (function () {
         ENUM_TOGGLE_ACTION_TYPE = {ADD: 'ADD', REMOVE: 'REMOVE', TOGGLE: 'TOGGLE'},
         BIND_ATTR_REPLACED = 'data-bind-replaced',
         evt_data_bind_view,
-        initModule;
+        run;
 
     evt_data_bind_view = (function () {
         var
@@ -880,7 +913,7 @@ spa_page_transition.data_bind = (function () {
         }
     })();
 
-    initModule = function () {
+    run = function () {
         $('[data-view-toggle-trigger]').on('click', function (e_toggle) {
             var
                 trigger_key = $(this).attr('data-view-toggle-trigger'),
@@ -915,9 +948,9 @@ spa_page_transition.data_bind = (function () {
     };
 
     return {
-        evt_data_bind_view: evt_data_bind_view,
-        initModule: initModule,
+        run: run,
         //VisibleForTesting
+        evt_data_bind_view: evt_data_bind_view,
         ENUM_TOGGLE_ACTION_TYPE: ENUM_TOGGLE_ACTION_TYPE,
     }
 })();

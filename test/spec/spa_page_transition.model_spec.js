@@ -1,9 +1,9 @@
-describe('TEST | spa_page_transition.model', function () {
+describe('TEST | spa_page_transition', function () {
     var
         n1, n2, n3, ns, ne,
-        d1, d2, d3, ds, de,
+        d1, d2, d3, ds, de, de2,
         initFunc,
-        page, dfdResolve, trigger;
+        page, dfdResolve, dfdReject, trigger;
 
     page = {
         renderPage: function () {
@@ -25,12 +25,23 @@ describe('TEST | spa_page_transition.model', function () {
         return d.promise();
     };
 
+    dfdReject = function () {
+        var
+            d = $.Deferred().reject(),
+            this_obj = this;
+
+        d.then(function (data) {
+            d = this_obj.exec_main_func(this_obj);
+        });
+        return d.promise();
+    };
+
     trigger = function (key, val) {
         console.log('trigger is called. key=' + key + ', val=' + val);
         return this;
     };
 
-    initFunc = spa_page_transition.createAjaxFunc('./', function (data) {
+    initFunc = spa_page_transition.createAjaxFunc('.', function (data) {
         console.log('initFUnc is called!');
     });
 
@@ -41,8 +52,8 @@ describe('TEST | spa_page_transition.model', function () {
         console.log('n2 is called!');
         observer.trigger('KEY2', 2);
     });
-    n3 = spa_page_transition.createFunc(function (observer) {
-        console.log('n3 is called!');
+    n3 = spa_page_transition.createFunc(function (observer, params) {
+        console.log('n3 is called! params.key=' + params.key);
         observer.trigger('KEY3', 3).trigger('KEY33', 3);
     });
     ns = spa_page_transition.createFunc(function (observer) {
@@ -72,6 +83,9 @@ describe('TEST | spa_page_transition.model', function () {
     de = spa_page_transition.createAjaxFunc('./', function (observer, data) {
         console.log('de is called!');
         throw new Error('dfd error');
+    });
+    de2 = spa_page_transition.createAjaxFunc('./', function (observer, data) {
+        console.log('de2 is called!');
     });
 
     describe('execute.func', function () {
@@ -134,6 +148,11 @@ describe('TEST | spa_page_transition.model', function () {
                     'func_list': [n1, d2, de],
                     'expected': {'n1': true, 'd2': true, 'de': true, 'render': false, 'error': true}
                 },
+                {
+                    'title': 'd third error 2',
+                    'func_list': [n1, d2, de2],
+                    'expected': {'n1': true, 'd2': true, 'de2': false, 'render': false, 'error': true}
+                },
             ];
 
         beforeEach(function () {
@@ -165,14 +184,17 @@ describe('TEST | spa_page_transition.model', function () {
             spyOn(de, 'main_func').and.callThrough();
             spyOn(de, 'execute').and.callFake(dfdResolve);
             spyOn(de, 'trigger').and.callFake(trigger);
+            spyOn(de2, 'main_func').and.callThrough();
+            spyOn(de2, 'execute').and.callFake(dfdReject);
+            spyOn(de2, 'trigger').and.callFake(trigger);
             spyOn(page, 'renderPage').and.callThrough();
             spyOn(page, 'renderErrorPage').and.callThrough();
         });
 
         $.each(params, function (param_idx, obj) {
             it(obj.title + '(' + param_idx + ')', function () {
-                spa_page_transition.debugMode().initialize().addAction('action', 'dummy-cls', obj.func_list);
-                spa_page_transition.model.execAction('action').then(function (data) {
+                spa_page_transition.debugMode().initialize().addAction('action-01', 'dummy-cls', obj.func_list);
+                spa_page_transition.model.execAction({'action': 'action-01', 'key': 'key01'}).then(function (data) {
                     page.renderPage(data);
                 }, function (data) {
                     if (data && data.stays) {
@@ -193,6 +215,7 @@ describe('TEST | spa_page_transition.model', function () {
                 obj.expected.d3 ? expect(d3.main_func).toHaveBeenCalled() : expect(d3.main_func).not.toHaveBeenCalled();
                 obj.expected.ds ? expect(ds.main_func).toHaveBeenCalled() : expect(ds.main_func).not.toHaveBeenCalled();
                 obj.expected.de ? expect(de.main_func).toHaveBeenCalled() : expect(de.main_func).not.toHaveBeenCalled();
+                obj.expected.de2 ? expect(de2.main_func).toHaveBeenCalled() : expect(de2.main_func).not.toHaveBeenCalled();
                 obj.expected.render ? expect(page.renderPage).toHaveBeenCalled() : expect(page.renderPage).not.toHaveBeenCalled();
                 obj.expected.error ? expect(page.renderErrorPage).toHaveBeenCalled() : expect(page.renderErrorPage).not.toHaveBeenCalled();
             });
