@@ -54,6 +54,7 @@ var plan_change = (function () {
         plan_change.shell.initModule($container);
 
         spa_page_transition.debugMode(is_debug_mode).initialize(initializationFunc)
+            .addAction(spa_page_transition.model.START_ACTION, 'list')
             .addAction('select-plan', 'list', [selectPlan])
             .addAction('next-to-confirm', 'confirm', [verifyPlan])
             .addAction('back-to-list')

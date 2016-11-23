@@ -96,6 +96,7 @@ var spa_page_transition = (function () {
 spa_page_transition.model = (function () {
     'use strict';
     var
+        START_ACTION = 'START-ACTION',
         actionProto, actionFactory,
         addAction, findAction, execAction,
         initialize,
@@ -156,10 +157,10 @@ spa_page_transition.model = (function () {
             promise = $.Deferred().resolve().promise(),
             action = findAction(anchor_map['action']);
 
-        if (action !== 'none' && action.funcList && action.funcList.length > 0) {
+        if (action.funcList && action.funcList.length > 0) {
             return execFunc(action.funcList, anchor_map, promise, i);
         } else {
-            return $.Deferred().resolve().promise();
+            return $.Deferred().resolve({action: action}).promise();
         }
     };
 
@@ -168,11 +169,11 @@ spa_page_transition.model = (function () {
             result;
 
         if (!action_id) {
-            return 'none';
+            return START_ACTION;
         }
         result = actionList.filter(function (obj, idx) {
-                return obj.actionId === action_id
-            })[0];
+            return obj.actionId === action_id
+        })[0];
 
         if (!result) {
             throw new Error('Invalid action... action_id=' + action_id);
@@ -202,133 +203,142 @@ spa_page_transition.model = (function () {
         execFunc: execFunc,
         initialize: initialize,
         getInitializationFunc: getInitializationFunc,
+        START_ACTION: START_ACTION,
     };
 }());
 
 
 spa_page_transition.func = (function () {
-    'use strict';
-    var
-        protoFunc,
-        chooseArgByType,
-        createFunc, createAjaxFunc;
-
-    protoFunc = {
-        execute: function (anchor_map) {
-            return this.exec_main_func(this, anchor_map).promise();
-        },
-
-        exec_main_func: function (this_obj, anchor_map, data) {
-            try {
-                this_obj.main_func(this_obj, anchor_map, data);
-            } catch (e) {
-                // console.warn(e);
-                return $.Deferred().reject();
-            }
-            if (this_obj.stays) {
-                return $.Deferred().reject({'stays': this_obj.stays});
-            } else {
-                return $.Deferred().resolve();
-            }
-        },
-
-        stay: function () {
-            this.stays = true;
-        },
-
-        error: function (err) {
-            throw new Error(err);
-        },
-
-        trigger: function (key, val) {
-            spa_page_transition.data_bind.evt_data_bind_view.trigger(key, val);
-            return this;
-        },
-    };
-
-    chooseArgByType = function (args, type) {
-        var i;
-
-        for (i = 0; i < args.length; i++) {
-            if (typeof(args[i]) === type) {
-                return args[i];
-            }
-        }
-    };
-
-    createFunc = function (_main_func) {
+        'use strict';
         var
-            i, arg_main_func, res;
+            protoFunc,
+            chooseArgByType,
+            createFunc, createAjaxFunc;
 
-        arg_main_func = chooseArgByType(arguments, 'function');
-        if (!arg_main_func) {
-            throw new Error('No main_func is set.');
-        }
-        res = Object.create(protoFunc);
-        res.main_func = arg_main_func;
-        return res;
-    };
+        protoFunc = {
+            execute: function (anchor_map) {
+                return this.exec_main_func(this, anchor_map).promise();
+            },
 
-    createAjaxFunc = function (_path, _params, _main_func) {
-        var
-            decide_path, decide_params,
-            res = createFunc.apply(this, arguments);
+            exec_main_func: function (this_obj, anchor_map, data) {
+                try {
+                    this_obj.main_func(this_obj, anchor_map, data);
+                } catch (e) {
+                    // console.warn(e);
+                    return $.Deferred().reject();
+                }
+                if (this_obj.stays) {
+                    return $.Deferred().reject({'stays': this_obj.stays});
+                } else {
+                    return $.Deferred().resolve();
+                }
+            },
 
-        res.path = chooseArgByType(arguments, 'string');
-        res.params = chooseArgByType(arguments, 'object');
+            stay: function () {
+                this.stays = true;
+            },
 
-        res.execute = function (anchor_map) {
-            var
-                d = $.Deferred(),
-                this_obj = this;
+            error: function (err) {
+                throw new Error(err);
+            },
 
-            spa_page_data.serverAccessor(decide_path(this_obj), decide_params(this_obj)).then(function (data) {
-                this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
-                    console.log('ajaxfunc.sub.succeeded');
-                    // d = $.Deferred().resolve();
-                }, function (data_main_func) {
-                    console.log('ajaxfunc.sub.failed');
-                    // d = $.Deferred().reject(data_main_func).promise();
-                });
-            }, function (data) {
-                d.reject(data);
-                console.log('ajaxfunc.srv.failed');
-            });
-
-            return d.promise();
+            trigger: function (key, val) {
+                spa_page_transition.data_bind.evt_data_bind_view.trigger(key, val);
+                return this;
+            },
         };
 
-        res.get_path = function (_get_path_func) {
-            this.get_path_func = _get_path_func;
-            return this;
-        };
+        chooseArgByType = function (args, type) {
+            var i;
 
-        res.get_params = function (_get_params_func) {
-            this.get_params_func = _get_params_func;
-            return this;
-        };
-
-        decide_path = function (this_obj) {
-            var
-                res = this_obj.get_path_func ? this_obj.get_path_func() : this_obj.path;
-            if (!res) {
-                throw new Error('path is not set.');
+            for (i = 0; i < args.length; i++) {
+                if (typeof(args[i]) === type) {
+                    return args[i];
+                }
             }
+        };
+
+        createFunc = function (_main_func) {
+            var
+                i, arg_main_func, res;
+
+            arg_main_func = chooseArgByType(arguments, 'function');
+            if (!arg_main_func) {
+                throw new Error('No main_func is set.');
+            }
+            res = Object.create(protoFunc);
+            res.main_func = arg_main_func;
             return res;
         };
 
-        decide_params = function (this_obj) {
-            return this_obj.get_params_func ? this_obj.get_params_func() : this_obj.params;
+        createAjaxFunc = function (_path, _params, _main_func) {
+            var
+                decide_path, decide_params,
+                res = createFunc.apply(this, arguments);
+
+            res.path = chooseArgByType(arguments, 'string');
+            res.params = chooseArgByType(arguments, 'object');
+
+            res.execute = function (anchor_map) {
+                var
+                    d = $.Deferred(),
+                    this_obj = this;
+
+                spa_page_data.serverAccessor(decide_path(this_obj), decide_params(this_obj)).then(function (data) {
+                        this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
+                            console.log('ajaxfunc.sub.succeeded');
+                            // d = $.Deferred().resolve();
+                        }, function (data_main_func) {
+                            console.log('ajaxfunc.sub.failed');
+                            return $.Deferred().reject(data_main_func).promise();
+                        });
+                    d.resolve();
+                    }, function (data) {
+                        d.reject(data);
+                        console.log('ajaxfunc.srv.failed');
+                    }
+                );
+                // spa_page_data.serverAccessor(decide_path(this_obj), decide_params(this_obj)).then(function (data) {
+                //     d = this_obj.exec_main_func(this_obj, anchor_map, data);
+                // }, function (data) {
+                //     d.reject(data);
+                //     console.log('ajaxfunc.srv.failed');
+                // });
+
+                return d.promise();
+            };
+
+            res.get_path = function (_get_path_func) {
+                this.get_path_func = _get_path_func;
+                return this;
+            };
+
+            res.get_params = function (_get_params_func) {
+                this.get_params_func = _get_params_func;
+                return this;
+            };
+
+            decide_path = function (this_obj) {
+                var
+                    res = this_obj.get_path_func ? this_obj.get_path_func() : this_obj.path;
+                if (!res) {
+                    throw new Error('path is not set.');
+                }
+                return res;
+            };
+
+            decide_params = function (this_obj) {
+                return this_obj.get_params_func ? this_obj.get_params_func() : this_obj.params;
+            };
+
+            return res;
         };
 
-        return res;
-    };
-
-    return {
-        createFunc: createFunc,
-        createAjaxFunc: createAjaxFunc,
-    }
-})();
+        return {
+            createFunc: createFunc,
+            createAjaxFunc: createAjaxFunc,
+        }
+    })();
 
 var spa_page_data = (function () {
     'use strict';
