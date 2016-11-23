@@ -42,7 +42,6 @@ var spa_page_transition = (function () {
     };
 
     initialize = function (initialize_func) {
-        console.log('initialize.isDebugMode=' + isDebugMode);
         spaLogger = spa_log.createLogger(isDebugMode, 'SPA.LOG ');
         return spa_page_transition.model.initialize.apply(this, arguments);
         return spa_page_transition;
@@ -98,11 +97,12 @@ spa_page_transition.model = (function () {
     'use strict';
     var
         actionProto, actionFactory,
-        addAction, findAction, execAction, startAction,
+        addAction, findAction, execAction,
+        initialize,
+
         actionList = [],
-        initializationFunc, initialize,
-        execFunc,
-        run;
+        initializationFunc, getInitializationFunc,
+        execFunc;
 
     /**
      * Action prototype
@@ -146,21 +146,9 @@ spa_page_transition.model = (function () {
         return this;
     };
 
-    // /**
-    //  * Make spa_page_transition starts.
-    //  * @param params: Optional. Pass map if necessary to use it in initilize func.
-    //  */
-    // run = function (params) {
-    //     if (!initializationFunc) {
-    //         startAction();
-    //     } else {
-    //         $.when(initializationFunc.execute(params)).then(startAction, startAction);
-    //     }
-    // };
-    //
-    // startAction = function () {
-    //     $(window).trigger('hashchange');
-    // };
+    getInitializationFunc = function () {
+        return initializationFunc;
+    };
 
     execAction = function (anchor_map) {
         var
@@ -169,7 +157,7 @@ spa_page_transition.model = (function () {
             action = findAction(anchor_map['action']);
 
         if (action !== 'none' && action.funcList && action.funcList.length > 0) {
-            return execFunc(action.funcList, anchor_map, promise, i, false);
+            return execFunc(action.funcList, anchor_map, promise, i);
         } else {
             return $.Deferred().resolve().promise();
         }
@@ -211,9 +199,9 @@ spa_page_transition.model = (function () {
     return {
         addAction: addAction,
         execAction: execAction,
-        // run: run,
+        execFunc: execFunc,
         initialize: initialize,
-        initializationFunc: initializationFunc,
+        getInitializationFunc: getInitializationFunc,
     };
 }());
 
@@ -230,9 +218,9 @@ spa_page_transition.func = (function () {
             return this.exec_main_func(this, anchor_map).promise();
         },
 
-        exec_main_func: function (this_obj, anchor_map) {
+        exec_main_func: function (this_obj, anchor_map, data) {
             try {
-                this_obj.main_func(this_obj, anchor_map);
+                this_obj.main_func(this_obj, anchor_map, data);
             } catch (e) {
                 // console.warn(e);
                 return $.Deferred().reject();
@@ -253,7 +241,7 @@ spa_page_transition.func = (function () {
         },
 
         trigger: function (key, val) {
-            spa_page_transition.shell.evt_data_bind_view.trigger(key, val);
+            spa_page_transition.data_bind.evt_data_bind_view.trigger(key, val);
             return this;
         },
     };
@@ -295,9 +283,16 @@ spa_page_transition.func = (function () {
                 this_obj = this;
 
             spa_page_data.serverAccessor(decide_path(this_obj), decide_params(this_obj)).then(function (data) {
-                d = this_obj.exec_main_func(this_obj, data, anchor_map);
+                this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
+                    console.log('ajaxfunc.sub.succeeded');
+                    // d = $.Deferred().resolve();
+                }, function (data_main_func) {
+                    console.log('ajaxfunc.sub.failed');
+                    // d = $.Deferred().reject(data_main_func).promise();
+                });
             }, function (data) {
                 d.reject(data);
+                console.log('ajaxfunc.srv.failed');
             });
 
             return d.promise();
@@ -310,7 +305,6 @@ spa_page_transition.func = (function () {
 
         res.get_params = function (_get_params_func) {
             this.get_params_func = _get_params_func;
-            console.log('get_params_func=' + _get_params_func);
             return this;
         };
 
@@ -320,12 +314,10 @@ spa_page_transition.func = (function () {
             if (!res) {
                 throw new Error('path is not set.');
             }
-            console.log('decide_path.this_obj.path=' + this_obj.path);
-            return window.location.origin + res;
+            return res;
         };
 
         decide_params = function (this_obj) {
-            console.log('decide_params.this_obj.params=' + this_obj.params);
             return this_obj.get_params_func ? this_obj.get_params_func() : this_obj.params;
         };
 
@@ -377,7 +369,6 @@ var spa_page_data = (function () {
         var
             dfd = $.Deferred();
 
-        console.log('ajax.path=' + filePath + ', data=' + data);
         spa_page_transition.getLogger('ajax.path', filePath, 'data', data);
         $.ajax({
             url: filePath,
@@ -522,7 +513,7 @@ spa_page_transition.shell = (function () {
     };
 
     renderErrorPage = function (data) {
-        if (data.error_mes) {
+        if (data && data.error_mes) {
             console.error(data.error_mes);
         }
         doRenderPage('spa-error');
@@ -575,10 +566,25 @@ spa_page_transition.shell = (function () {
             });
         });
 
-        if (!spa_page_transition.model.initializationFunc) {
+        if (!spa_page_transition.model.getInitializationFunc()) {
             startAction();
         } else {
-            $.when(spa_page_transition.model.initializationFunc.execute(params)).then(startAction, renderErrorPage);
+            $.when(spa_page_transition.model.execFunc([spa_page_transition.model.getInitializationFunc()],
+                null, $.Deferred().resolve().promise(), 0)).then(function () {
+                console.log('shell.run.done');
+                startAction();
+            }, function () {
+                console.log('shell.run.fail');
+                renderErrorPage();
+            });
+
+            // $.when(spa_page_transition.model.getInitializationFunc().execute(params)).then(function () {
+            //     console.log('shell.run.done');
+            //     startAction();
+            // }, function () {
+            //     console.log('shell.run.fail');
+            //     renderErrorPage();
+            // });
         }
     };
 

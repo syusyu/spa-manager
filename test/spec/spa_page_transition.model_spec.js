@@ -24,6 +24,19 @@ describe('TEST | spa_page_transition', function () {
         });
         return d.promise();
     };
+    // dfdResolve = function (this_obj, anchor_map, data) {
+    //     try {
+    //         this_obj.main_func(this_obj, anchor_map, data);
+    //     } catch (e) {
+    //         // console.warn(e);
+    //         return $.Deferred().reject();
+    //     }
+    //     if (this_obj.stays) {
+    //         return $.Deferred().reject({'stays': this_obj.stays});
+    //     } else {
+    //         return $.Deferred().resolve();
+    //     }
+    // };
 
     dfdReject = function () {
         var

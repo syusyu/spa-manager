@@ -1,12 +1,6 @@
 var plan_change = (function () {
     'use strict';
     var
-        PATH_INIT = '/server_response_initialize.json',
-        PATH_UPDATE = '/server_response_update.json',
-        PATH_CANCEL = '/server_response_update_cancel.json',
-        // PATH_INIT = '/changeplan/init',
-        // PATH_UPDATE = '/changeplan/update',
-        // PATH_CANCEL = '/changeplan/cancel',
         logger, getLogger,
         initModule;
 
@@ -14,12 +8,16 @@ var plan_change = (function () {
         return logger;
     };
 
-    initModule = function ($container, send_params, is_debug_mode) {
+    initModule = function ($container, $server_host, send_params, is_debug_mode) {
         var
-            initializationFunc = spa_page_transition.createAjaxFunc(PATH_INIT, send_params, function (observer, data) {
+            server_host = $server_host.val(),
+            PATH_INIT = server_host + '/server_response_initialize.json',
+            PATH_UPDATE = server_host + '/server_response_update.json',
+            PATH_CANCEL = server_host + '/server_response_update_cancel.json',
+            initializationFunc = spa_page_transition.createAjaxFunc(PATH_INIT, send_params, function (observer, anchor_map, data) {
                 plan_change.getLogger().debug('initial data loaded! status', data.status, 'init_data', data.init_data);
-                plan_change.serverData.setInitData(data.init_data);
-                plan_change.serverData.setPlanList(data.plan_list);
+                plan_change.model.serverData.setInitData(data.init_data);
+                plan_change.model.serverData.setPlanList(data.plan_list);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
                 selectDefaultPlan.execute();
             }),
@@ -45,10 +43,10 @@ var plan_change = (function () {
                 selectPlan.execute(anchor_map);
             }),
 
-            updatePlan = spa_page_transition.createAjaxFunc(PATH_UPDATE, function (observer, data) {
+            updatePlan = spa_page_transition.createAjaxFunc(PATH_UPDATE, function (observer, anchor_map, data) {
             }),
 
-            cancelPlan = spa_page_transition.createAjaxFunc(PATH_CANCEL, function (observer, data) {
+            cancelPlan = spa_page_transition.createAjaxFunc(PATH_CANCEL, function (observer, anchor_map, data) {
             });
 
         logger = spa_log.createLogger(is_debug_mode, '### PLAN_CHANGE.LOG ###');
