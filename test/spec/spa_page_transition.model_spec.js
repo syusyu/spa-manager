@@ -14,26 +14,14 @@ describe('TEST | spa_page_transition', function () {
         }
     };
 
-    // dfdResolve = function () {
-    //     var
-    //         d = $.Deferred().resolve(),
-    //         this_obj = this;
-    //
-    //     d.then(function (data) {
-    //         d = this_obj.exec_main_func(this_obj);
-    //     });
-    //     return d.promise();
-    // };
     dfdResolve = function (anchor_map) {
         var
             d = $.Deferred().resolve(),
             this_obj = this;
 
         d.then(function (data) {
-            // d = this_obj.exec_main_func(this_obj, anchor_map, data);
             d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
-                // console.log('ajaxfunc.sub.succeeded. stays=' + (data_main_func ? data_main_func.stays : 'none'));
-                // d = $.Deferred().resolve();
+                return $.Deferred().resolve(data_main_func).promise();
             }, function (data_main_func) {
                 return $.Deferred().reject(data_main_func).promise();
             });

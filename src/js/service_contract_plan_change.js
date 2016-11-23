@@ -57,7 +57,7 @@ var plan_change = (function () {
             .addAction(spa_page_transition.model.START_ACTION, 'list')
             .addAction('select-plan', 'list', [selectPlan])
             .addAction('next-to-confirm', 'confirm', [verifyPlan])
-            .addAction('back-to-list')
+            .addAction('back-to-list', 'list')
             .addAction('update', 'complete', [updatePlan])
             .addAction('cancel-init', 'cancel')
             .addAction('cancel', 'cancel-complete', [cancelPlan])
