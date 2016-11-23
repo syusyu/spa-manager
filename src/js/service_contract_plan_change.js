@@ -136,10 +136,7 @@ plan_change.shell = (function () {
 plan_change.model = (function () {
     'use strict';
     var
-        serverData,
-        existsPlan, selectPlan, verifyPlan, updatePlan, cancelInitPlan, cancelPlan,
-        serverHost,
-        initModule;
+        serverData, existsPlan, selectPlan, verifyPlan;
 
     serverData = (function () {
         var

@@ -191,7 +191,6 @@ spa_page_transition.model = (function () {
         if (!result) {
             throw new Error('Invalid action... action_id=' + action_id);
         }
-        console.log('#### next-page=' + result.nextPageCls);
         return result;
     };
 
@@ -571,10 +570,8 @@ spa_page_transition.shell = (function () {
             startAction();
         } else {
             $.when(spa_page_transition.model.getInitializationFunc().execute(params)).then(function () {
-                console.log('shell.run.done');
                 startAction();
             }, function () {
-                console.log('shell.run.fail');
                 renderErrorPage();
             });
         }
