@@ -802,7 +802,7 @@ spa_page_transition.data_bind = (function () {
 
         trigger = function (key, data) {
             var
-                bind_props, all_props, bind_attr_type_selectors;
+                all_props, bind_attr_type_selectors;
 
             if (!data) {
                 return true;
