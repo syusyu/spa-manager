@@ -14,8 +14,13 @@ var plan_change = (function () {
             PATH_INIT = server_host + '/server_response_initialize.json',
             PATH_UPDATE = server_host + '/server_response_update.json',
             PATH_CANCEL = server_host + '/server_response_update_cancel.json',
+
             initializationFunc = spa_page_transition.createAjaxFunc(PATH_INIT, send_params, function (observer, anchor_map, data) {
                 plan_change.getLogger().debug('initial data loaded! status', data.status, 'init_data', data.init_data);
+                if (data.status !== '0') {
+                    observer.error('Invalid initial data');
+                    return;
+                }
                 plan_change.model.serverData.setInitData(data.init_data);
                 plan_change.model.serverData.setPlanList(data.plan_list);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
@@ -44,9 +49,15 @@ var plan_change = (function () {
             }),
 
             updatePlan = spa_page_transition.createAjaxFunc(PATH_UPDATE, function (observer, anchor_map, data) {
+                if (data.status !== '0') {
+                    observer.error('');
+                }
             }),
 
             cancelPlan = spa_page_transition.createAjaxFunc(PATH_CANCEL, function (observer, anchor_map, data) {
+                if (data.status !== '0') {
+                    observer.error('');
+                }
             });
 
         logger = spa_log.createLogger(is_debug_mode, '### PLAN_CHANGE.LOG ###');

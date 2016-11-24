@@ -21,9 +21,9 @@ var spa_page_transition = (function () {
 
     /**
      * Register ajax function to be bound with action
-     * @param path
-     * @param params
-     * @param call_back_func
+     * @param path: optional
+     * @param params: optional
+     * @param call_back_func: compulsory
      * @returns {*}
      */
     createAjaxFunc = function (path, params, call_back_func) {
@@ -41,9 +41,14 @@ var spa_page_transition = (function () {
         return spa_page_transition;
     };
 
+    /**
+     * Initialize spa_page_transition
+     * @param initialize_func: optional
+     * @returns {*}
+     */
     initialize = function (initialize_func) {
         spaLogger = spa_log.createLogger(isDebugMode, 'SPA.LOG ');
-        return spa_page_transition.model.initialize.apply(this, arguments);
+        spa_page_transition.model.initialize.apply(this, arguments);
         return spa_page_transition;
     };
 
@@ -117,9 +122,8 @@ spa_page_transition.model = (function () {
     /**
      * Create actionProto
      * @param action_id: compulsory
-     * @param next_page_cls: compulsory
+     * @param next_page_cls: optional
      * @param main_proc: optional
-     * @param post_proc: optional
      * @returns {actionProto|*}
      */
     actionFactory = function (action_id, next_page_cls, func_list) {
@@ -144,7 +148,6 @@ spa_page_transition.model = (function () {
     initialize = function (initialize_func) {
         initializationFunc = initialize_func;
         actionList = [];
-        return this;
     };
 
     getInitializationFunc = function () {
@@ -221,8 +224,8 @@ spa_page_transition.func = (function () {
             try {
                 this_obj.main_func(this_obj, anchor_map, data);
             } catch (e) {
-                // console.warn(e);
-                return $.Deferred().reject();
+                console.warn(e.message ? e.message : e);
+                return $.Deferred().reject(e.message ? {'err_mes': e.message} : e);
             }
             if (this_obj.stays) {
                 return $.Deferred().reject({'stays': this_obj.stays});
@@ -235,8 +238,8 @@ spa_page_transition.func = (function () {
             this.stays = true;
         },
 
-        error: function (err) {
-            throw new Error(err);
+        error: function (err_mes) {
+            throw new Error(err_mes);
         },
 
         trigger: function (key, val) {
@@ -246,9 +249,7 @@ spa_page_transition.func = (function () {
     };
 
     chooseArgByType = function (args, type) {
-        var i;
-
-        for (i = 0; i < args.length; i++) {
+        for (var i = 0; i < args.length; i++) {
             if (typeof(args[i]) === type) {
                 return args[i];
             }
@@ -330,57 +331,23 @@ spa_page_transition.func = (function () {
 var spa_page_data = (function () {
     'use strict';
     var
-        serverAccessor, doAccessServer;
+        serverAccessor = function (filePath, data) {
+            var
+                dfd = $.Deferred();
 
-    /**
-     * The callback function should return data.spa_status === 'succeeded'
-     * @param filePath: Url of server
-     * @param send_params: Parameters for send to server
-     * @param succeeded_func
-     * @param failed_func
-     * @returns {*<T>|*}
-     */
-    doAccessServer = function (filePath, send_params, succeeded_func, failed_func) {
-        var
-            dfd = $.Deferred();
+            $.ajax({
+                url: filePath,
+                type: 'get',
+                data: data,
+                dataType: 'json',
+                success: dfd.resolve,
+                error: dfd.reject
+            });
 
-        serverAccessor(filePath, send_params).done(function (data) {
-            succeeded_func(data);
-            dfd.resolve();
-        }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
-            if (errorThrown) {
-                console.error(errorThrown.message);
-            }
-            if (failed_func) {
-                failed_func(XMLHttpRequest);
-            } else {
-                spa_page_transition.shell.renderErrorPage(XMLHttpRequest.message);
-            }
-            dfd.reject('Connection error occurred.');
-        });
-
-        return dfd.promise();
-    };
-
-    serverAccessor = function (filePath, data) {
-        var
-            dfd = $.Deferred();
-
-        spa_page_transition.getLogger('ajax.path', filePath, 'data', data);
-        $.ajax({
-            url: filePath,
-            type: 'get',
-            data: data,
-            dataType: 'json',
-            success: dfd.resolve,
-            error: dfd.reject
-        });
-
-        return dfd.promise();
-    };
+            return dfd.promise();
+        };
 
     return {
-        doAccessServer: doAccessServer,
         serverAccessor: serverAccessor,
     };
 }());
@@ -513,8 +480,8 @@ spa_page_transition.shell = (function () {
     };
 
     renderErrorPage = function (data) {
-        if (data && data.error_mes) {
-            console.error(data.error_mes);
+        if (data && data.err_mes) {
+            console.warn(data.err_mes);
         }
         doRenderPage('spa-error');
     };
