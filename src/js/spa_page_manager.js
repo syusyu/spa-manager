@@ -1,7 +1,13 @@
-/*
- * SPA page management
+/**
+ * spa_page_transition.
+ * Manages page transition and action of Single Page Application
  *
- * @author Okabe
+ * Example of how to use
+ * spa_page_transition.debugMode(true).initialize(initializationFunc).addAction('action-id', 'next-page-class', [func]).run();
+ * spa_page_transition.initialize(initializationFunc).addAction('action-id', 'next-page-class', [func]).run();
+ * spa_page_transition.addAction('action-id', 'next-page-class', [f1]).addAction('action-id', 'next-page-class', [f1, f2]).run();
+ *
+ * @type {{initModule, addAction, addEvent, prepareActivation, getLogger, DATA_BIND_EVENT}}
  */
 var spa_page_transition = (function () {
     'use strict';
@@ -52,6 +58,11 @@ var spa_page_transition = (function () {
         return spa_page_transition;
     };
 
+    /**
+     * Run as debug mode (This allows to print debug log)
+     * @param is_debug_mode
+     * @returns {{initModule, addAction, addEvent, prepareActivation, getLogger, DATA_BIND_EVENT}}
+     */
     debugMode = function (is_debug_mode) {
         isDebugMode = is_debug_mode;
         return spa_page_transition;
