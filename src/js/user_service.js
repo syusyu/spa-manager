@@ -51,12 +51,14 @@ var plan_change = (function () {
             updatePlan = spa_page_transition.createAjaxFunc(PATH_UPDATE, function (observer, anchor_map, data) {
                 if (data.status !== '0') {
                     observer.error('');
+                    return;
                 }
             }),
 
             cancelPlan = spa_page_transition.createAjaxFunc(PATH_CANCEL, function (observer, anchor_map, data) {
                 if (data.status !== '0') {
                     observer.error('');
+                    return;
                 }
             });
 

@@ -12,7 +12,7 @@
 var spa_page_transition = (function () {
     'use strict';
     var
-        addAction, createFunc, createAjaxFunc, initialize, debugMode, run,
+        addAction, createFunc, createAjaxFunc, initialize, debugMode, run, renderPage,
         spaLogger, getLogger,
         isDebugMode;
 
@@ -77,6 +77,14 @@ var spa_page_transition = (function () {
         spa_page_transition.shell.run(params);
     };
 
+    /**
+     * Make the spa-page visible
+     * @param page_class_name: the class name of showing page, compulsory
+     */
+    renderPage = function (page_class_name) {
+        spa_page_transition.shell.doRenderPage(page_class_name);
+    };
+
     getLogger = function () {
         return spaLogger;
     };
@@ -105,6 +113,7 @@ var spa_page_transition = (function () {
         debugMode: debugMode,
         initialize: initialize,
         run: run,
+        renderPage: renderPage,
     };
 }());
 
@@ -501,7 +510,7 @@ spa_page_transition.shell = (function () {
         var
             $show_target_page = $('.' + pageCls),
             $current_page = $(".spa-page:visible"),
-            all_matched = $current_page.length > 0 ? true : false;
+            all_matched = spa_page_util.exists($current_page) ? true : false;
 
         $current_page.each(function (idx, el) {
             all_matched &= $(el).hasClass(pageCls);
@@ -557,6 +566,7 @@ spa_page_transition.shell = (function () {
 
     return {
         run: run,
+        doRenderPage: doRenderPage,
         //VisibleForTesting
         anchorGetter: anchorGetter,
         bindView: bindView,
@@ -832,7 +842,7 @@ spa_page_transition.data_bind = (function () {
 
                 _each_attr_type(function (bind_attr, attr) {
                     el_prop_key = $this.attr(bind_attr);
-                    if (!el_prop_key) {
+                    if (!el_prop_key || !spa_page_util.startsWith(el_prop_key, key)) {
                         return true;
                     }
                     if (all_props[el_prop_key]) {
@@ -975,5 +985,37 @@ var spa_log = (function () {
 
     return {
         createLogger: createLogger,
+    }
+})();
+
+var spa_page_util = (function () {
+    'use strict';
+    var
+        exists = function ($el) {
+            return $el && $el.length > 0;
+        },
+        isEmpty = function (target) {
+            if (!target) {
+                return true;
+            }
+            if ($.isArray(target) || typeof target === 'string') {
+                return target.length < 1;
+            } else if (typeof target === 'object') {
+                return Object.keys(target).length < 1;
+            }
+        },
+        isNotEmpty = function (target) {
+            return !isEmpty(target);
+        },
+        startsWith = function (str, prefix) {
+            return str.indexOf(prefix) === 0;
+        };
+
+
+    return {
+        exists: exists,
+        isEmpty: isEmpty,
+        isNotEmpty: isNotEmpty,
+        startsWith: startsWith,
     }
 })();
