@@ -53,14 +53,14 @@ var plan_change = (function () {
                     observer.error('');
                     return;
                 }
-            }),
+            }).get_params(plan_change.shell.getParamForUpdate),
 
             cancelPlan = spa_page_transition.createAjaxFunc(PATH_CANCEL, function (observer, anchor_map, data) {
                 if (data.status !== '0') {
                     observer.error('');
                     return;
                 }
-            });
+            }).get_params(plan_change.shell.getParamForCancel);
 
         logger = spa_log.createLogger(is_debug_mode, '### PLAN_CHANGE.LOG ###');
 
