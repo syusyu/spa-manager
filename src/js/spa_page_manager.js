@@ -577,7 +577,7 @@ spa_page_transition.data_bind = (function () {
     'use strict';
     var
         ENUM_TOGGLE_ACTION_TYPE = {ADD: 'ADD', REMOVE: 'REMOVE', TOGGLE: 'TOGGLE'},
-        BIND_ATTR_REPLACED = 'data-bind-replaced',
+        BIND_ATTR_REPLACED_KEY = 'data-bind-replaced-key',
         evt_data_bind_view,
         run;
 
@@ -596,8 +596,11 @@ spa_page_transition.data_bind = (function () {
             BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop'];
 
         _init_bind_prop_map = function (key, data) {
-            $('[' + BIND_ATTR_REPLACED + ']').each(function (idx, el) {
-                $(el).remove();
+            $('[' + BIND_ATTR_REPLACED_KEY + ']').each(function (idx, el) {
+                var replaced_key = $(el).attr(BIND_ATTR_REPLACED_KEY);
+                if (spa_page_util.startsWith(replaced_key, key)) {
+                    $(el).remove();
+                }
             });
             _bind_prop_map = {};
             _create_bind_prop_map(key, data);
@@ -769,7 +772,7 @@ spa_page_transition.data_bind = (function () {
 
                 if (bind_attr) {
                     $el.attr(bind_attr_type, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
-                    $el.attr(BIND_ATTR_REPLACED, true);
+                    $el.attr(BIND_ATTR_REPLACED_KEY, loop_prop_key);
                 }
             });
         };
