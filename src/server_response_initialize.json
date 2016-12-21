@@ -12,6 +12,11 @@
       "notes_body1": "<b>Be be careful</b> <br />Be careful Be careful Be careful Be careful Be careful Be careful ",
       "devices": [
         {
+          "id": "-1",
+          "title": "Please select",
+          "selected": "selected"
+        },
+        {
           "id": "d11",
           "title": "Device title1 of plan1",
           "body": "Divice body1 of plan1"

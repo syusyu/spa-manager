@@ -593,7 +593,7 @@ spa_page_transition.data_bind = (function () {
             get_toggle_class_list,
             trigger,
 
-            BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop'];
+            BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop', 'selected'];
 
         _init_bind_prop_map = function (key, data) {
             $('[' + BIND_ATTR_REPLACED_KEY + ']').each(function (idx, el) {
@@ -692,6 +692,8 @@ spa_page_transition.data_bind = (function () {
                 $el.html(val);
             } else if (attr === 'val') {
                 $el.val(val);
+            } else if (attr === 'selected') {
+                $el.attr(attr, 'selected');
             } else {
                 $el.attr(attr, val);
             }
@@ -850,8 +852,6 @@ spa_page_transition.data_bind = (function () {
                     }
                     if (all_props[el_prop_key]) {
                         _settle_bind_val($this, attr, data, el_prop_key);
-                    } else if (!$this.attr('data-bind-loop')) {
-                        $this.hide();
                     }
                 });
             });
