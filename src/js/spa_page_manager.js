@@ -361,7 +361,8 @@ var spa_page_data = (function () {
                 data: data,
                 dataType: 'json',
                 success: dfd.resolve,
-                error: dfd.reject
+                error: dfd.reject,
+                cache: false
             });
 
             return dfd.promise();
