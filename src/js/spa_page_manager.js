@@ -594,7 +594,7 @@ spa_page_transition.data_bind = (function () {
             get_toggle_class_list,
             trigger,
 
-            BIND_ATTR_TYPES = ['id', 'text', 'html', 'val', 'loop', 'selected'];
+            BIND_ATTR_TYPES = ['id', 'text', 'text1', 'text2', 'text3', 'html', 'val', 'loop', 'selected'];
 
         _init_bind_prop_map = function (key, data) {
             $('[' + BIND_ATTR_REPLACED_KEY + ']').each(function (idx, el) {
@@ -684,11 +684,20 @@ spa_page_transition.data_bind = (function () {
 
         _settle_bind_val = function ($el, attr, data, prop_key) {
             var
+                prev_val,
                 format = $el.attr('data-bind-format'),
+                separator = $el.attr('data-bind-text-separator') || '',
                 val = _format_bind_val(data, prop_key, format);
 
             if (attr === 'text') {
                 $el.text(val);
+            } else if (attr === 'text1' || attr === 'text2' || attr === 'text3') {
+                prev_val = $el.text();
+                if (prev_val) {
+                    $el.text(prev_val + separator + val);
+                } else {
+                    $el.text(val);
+                }
             } else if (attr === 'html') {
                 $el.html(val);
             } else if (attr === 'val') {
