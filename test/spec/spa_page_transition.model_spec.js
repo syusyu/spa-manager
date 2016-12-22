@@ -138,6 +138,11 @@ describe('TEST | spa_page_transition', function () {
                     'func_list': [n1, d2, ds],
                     'expected': {'n1': true, 'd2': true, 'ds': true, 'render': false, 'error': false}
                 },
+                {
+                    'title': 'n first stay, d second',
+                    'func_list': [ns, d2, d3],
+                    'expected': {'ns': true, 'd2': false, 'd3': false, 'render': false, 'error': false}
+                },
 
                 //error
                 {

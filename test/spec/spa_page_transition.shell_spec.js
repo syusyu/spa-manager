@@ -4,8 +4,8 @@ describe('TEST | spa_page_transition.shell', function () {
         var
             str_param_list, expected, actual;
 
-        str_param_list = ['cd=a, id=1', 'cd=a, id=1, $name.foo.data-action-change-params', '$name.foo.data-action-change-params, cd=a, id=1'];
-        expected = [{'cd': 'a', 'id': '1'}, {'cd': 'a', 'id': '1'}, {'cd': 'a', 'id': '1'}];
+        str_param_list = ['id, cd', 'cd=a, id=1', 'cd=a, id=1, $name.foo.data-action-change-params', '$name.foo.data-action-change-params, cd=a, id=1'];
+        expected = [{}, {'cd': 'a', 'id': '1'}, {'cd': 'a', 'id': '1'}, {'cd': 'a', 'id': '1'}];
         $.each(str_param_list, function (idx, str_param) {
             it('idx=' + idx, function () {
                 actual = spa_page_transition.shell.anchorGetter.createSelfAnchorMap(str_param);
