@@ -15,27 +15,22 @@ describe('TEST | spa_page_transition', function () {
     };
 
     dfdResolve = function (anchor_map) {
-        var d = $.Deferred();
-        this.exec_main_func(this, anchor_map, d);
+        var
+            d = $.Deferred().resolve(),
+            this_obj = this;
+
+        d.then(function (data) {
+            d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
+                return $.Deferred().resolve(data_main_func).promise();
+            }, function (data_main_func) {
+                return $.Deferred().reject(data_main_func).promise();
+            });
+        }, function (data) {
+            console.log('ajaxfunc.srv.failed');
+            d.reject(data);
+        });
         return d.promise();
     };
-    // dfdResolve = function (anchor_map) {
-    //     var
-    //         d = $.Deferred().resolve(),
-    //         this_obj = this;
-    //
-    //     d.then(function (data) {
-    //         d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
-    //             return $.Deferred().resolve(data_main_func).promise();
-    //         }, function (data_main_func) {
-    //             return $.Deferred().reject(data_main_func).promise();
-    //         });
-    //     }, function (data) {
-    //         d.reject(data);
-    //         console.log('ajaxfunc.srv.failed');
-    //     });
-    //     return d.promise();
-    // };
 
     dfdReject = function () {
         var
