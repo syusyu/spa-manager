@@ -15,22 +15,27 @@ describe('TEST | spa_page_transition', function () {
     };
 
     dfdResolve = function (anchor_map) {
-        var
-            d = $.Deferred().resolve(),
-            this_obj = this;
-
-        d.then(function (data) {
-            d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
-                return $.Deferred().resolve(data_main_func).promise();
-            }, function (data_main_func) {
-                return $.Deferred().reject(data_main_func).promise();
-            });
-        }, function (data) {
-            d.reject(data);
-            console.log('ajaxfunc.srv.failed');
-        });
+        var d = $.Deferred();
+        this.exec_main_func(this, anchor_map, d);
         return d.promise();
     };
+    // dfdResolve = function (anchor_map) {
+    //     var
+    //         d = $.Deferred().resolve(),
+    //         this_obj = this;
+    //
+    //     d.then(function (data) {
+    //         d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
+    //             return $.Deferred().resolve(data_main_func).promise();
+    //         }, function (data_main_func) {
+    //             return $.Deferred().reject(data_main_func).promise();
+    //         });
+    //     }, function (data) {
+    //         d.reject(data);
+    //         console.log('ajaxfunc.srv.failed');
+    //     });
+    //     return d.promise();
+    // };
 
     dfdReject = function () {
         var
@@ -129,9 +134,24 @@ describe('TEST | spa_page_transition', function () {
                     'expected': {'ns': true, 'n2': false, 'n3': false, 'render': false, 'error': false}
                 },
                 {
+                    'title': 'n second stay',
+                    'func_list': [n1, ns, n3],
+                    'expected': {'n1': true, 'ns': true, 'n3': false, 'render': false, 'error': false}
+                },
+                {
+                    'title': 'n third stay',
+                    'func_list': [n1, n2, ns],
+                    'expected': {'n1': true, 'n2': true, 'ns': true, 'render': false, 'error': false}
+                },
+                {
                     'title': 'd first stay',
                     'func_list': [ds, n2, n3],
                     'expected': {'ds': true, 'n2': false, 'n3': false, 'render': false, 'error': false}
+                },
+                {
+                    'title': 'd second stay',
+                    'func_list': [n1, ds, d2],
+                    'expected': {'n1': true, 'ds': true, 'd2': false, 'render': false, 'error': false}
                 },
                 {
                     'title': 'd third stay',
