@@ -17,8 +17,22 @@ describe('TEST | spa_page_transition', function () {
     dfdResolve = function (anchor_map) {
         var
             d = $.Deferred().resolve(),
-            this_obj = this;
+            this_obj = this,
+            data = null, data_main_func = null;
 
+        // console.log('### ajax execute start.');
+        // setTimeout(function(){
+        //     console.log('### ajax execute callback start.' + this_obj.exec_main_func(this_obj, anchor_map, data));
+        //     d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
+        //         console.log('### ajax execute callback done.');
+        //         return $.Deferred().resolve(data_main_func).promise();
+        //     }, function (data_main_func) {
+        //         console.log('### ajax execute callback fail.');
+        //         return $.Deferred().reject(data_main_func).promise();
+        //     });
+        //     console.log('### ajax execute callback end.');
+        // }, 10);
+        // console.log('### ajax execute end.');
         d.then(function (data) {
             d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
                 return $.Deferred().resolve(data_main_func).promise();

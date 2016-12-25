@@ -180,7 +180,8 @@ spa_page_transition.model = (function () {
 
     execFunc = function (func_list, anchor_map) {
         var
-            i, p;
+            i, p,
+            f_idx = 1;
 
         if (spa_page_util.isEmpty(func_list)) {
             return $.Deferred().resolve().promise();
@@ -188,9 +189,10 @@ spa_page_transition.model = (function () {
 
         p = func_list[0].execute(anchor_map);
 
+
         for (i = 1; i < func_list.length; i++) {
             p = p.then(function (data) {
-                return func_list[i].execute(anchor_map);
+                return func_list[f_idx++].execute(anchor_map);
             }, function (data) {
                 return $.Deferred().reject(data).promise();
             });
