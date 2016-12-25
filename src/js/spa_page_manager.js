@@ -247,7 +247,10 @@ spa_page_transition.func = (function () {
                 return $.Deferred().reject(e.message ? {'err_mes': e.message} : e);
             }
             if (this_obj.stays) {
-                return $.Deferred().reject({'stays': this_obj.stays});
+                //Initialize stays here.
+                this_obj.stays = false;
+                spa_page_transition.getLogger().debug('exec_main_func.stays is on.');
+                return $.Deferred().reject({'stays': true});
             } else {
                 return $.Deferred().resolve();
             }
@@ -308,6 +311,7 @@ spa_page_transition.func = (function () {
                         d.reject(data_main_func);
                     });
                 }, function (data) {
+                    spa_page_transition.getLogger().error('ajaxFunc.serverAccess failed. data', data);
                     d.reject(data);
                 }
             );
@@ -982,32 +986,43 @@ var spa_log = (function () {
         isDebugMode: true,
         logPrefix: '',
         debug: function () {
+            var log;
+
+            if (!this.isDebugMode) {
+                return;
+            }
+            log = this.create_log(arguments);
+            if (spa_page_util.isNotEmpty(log)) {
+                console.log(log);
+            }
+        },
+        error: function () {
+            var log = this.create_log(arguments);
+            if (spa_page_util.isNotEmpty(log)) {
+                console.error(log);
+            }
+        },
+        create_log: function (logs) {
             var
                 log, i, is_left, is_right, is_last,
                 result = '';
 
-            if (arguments.length < 1) {
+            if (logs.length < 1) {
                 console.error('No arguments...')
                 return;
             }
-            if (!this.isDebugMode) {
-                return;
-            }
 
-            result += this.logPrefix + ' ';
-
-            for (i = 0; i < arguments.length; i++) {
-                is_last = (i === arguments.length - 1);
+            for (i = 0; i < logs.length; i++) {
+                is_last = (i === logs.length - 1);
                 is_right = (i % 2 === 1);
 
                 log = (is_right ? ' = ' : '');
-                log += arguments[i] instanceof Object ? JSON.stringify(arguments[i], null, '\t') : arguments[i];
+                log += logs[i] instanceof Object ? JSON.stringify(logs[i], null, '\t') : logs[i];
                 log += (is_right && !is_last ? ', ' : '');
 
                 result += log;
             }
-
-            console.log(result);
+            return result;
         }
     };
 
