@@ -623,7 +623,7 @@ spa_page_transition.data_bind = (function () {
             _create_loop_element, _do_find_loop_element, _clone_loop_children, _replace_cloned_element_attr,
 
             get_toggle_class_list,
-            trigger,
+            trigger, show_condition,
 
             BIND_ATTR_TYPES = ['id', 'text', 'text1', 'text2', 'text3', 'html', 'val', 'loop', 'selected'];
 
@@ -912,7 +912,10 @@ spa_page_transition.data_bind = (function () {
                 });
             });
 
-            $('[data-bind-show-if],[data-bind-show-id]').each(function (idx, el) {
+
+
+
+            $('[data-bind-show-if],[data-bind-show-if-not],[data-bind-show-id],[data-bind-show-exists],[data-bind-show-exists-not]').each(function (idx, el) {
                 var
                     pure_attr, obj_key_cond_list, obj_key_list, cond, val;
 
@@ -946,9 +949,98 @@ spa_page_transition.data_bind = (function () {
             });
         };
 
+        show_condition = (function () {
+            var
+                COND_TYPES = ['eq', 'exists'],
+                showCondMap = {},
+                createShowCond,
+                showCondProto, showCondEq, showCondExists,
+                findShowCond;
+
+            $.each(COND_TYPES, function (idx, el) {
+                console.log('###############################initialization of show_condition ################################')
+                showCondMap[el] = createShowCond(el);
+                showCondMap[el + '-not'] = createShowCond(el + '-not');
+            });
+
+            createShowCond = function (cond_type) {
+                var
+                    res, cond_attr;
+                if (spa_page_util.startsWith('eq')) {
+                    res = Object.create(showCondEq);
+                } else if (spa_page_util.startsWith('exists')) {
+                    res = Object.create(showCondExists);
+                } else {
+                    throw new Error('cond type NOT exists:' + cond_type);
+                }
+                res.init(spa_page_util.contains('-not'));
+                return res;
+            };
+
+            showCondProto = {
+                init: function (_is_not) {
+                    this.is_not = _is_not;
+                },
+                visible: function (data, attr) {
+                    var
+                        entity_prop, entity_prop_cond;
+                    if (!data) {
+                        console.warn('########invisible');
+                        return false;
+                    }
+
+                    entity_prop_cond = attr.split('=');
+                    entity_prop = entity_prop_cond[0].split('\.');
+                    if (!entity_prop) {
+                        console.warn('########invisible entity_prop');
+                        return false;
+                    }
+                    this.entity = entity_prop[0];
+                    this.prop_tree = entity_prop[1];
+                    if (entity_prop_cond.length > 1) {
+                        this.cond = entity_prop_cond[1];
+                    }
+
+                    return this.is_not ? !this.matched() : this.matched();
+                }
+            };
+
+            showCondEq = {
+                matched: function (data) {
+                    var val = data[this.prop_tree];
+                    if (!val) {
+                        return false;
+                    } else if (this.cond && this.cond !== val) {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+            };
+
+            findShowCond = function (selector) {
+                var key;
+                if (spa_page_util.contains(selector, 'eq') || spa_page_util.contains(selector, 'if') || spa_page_util.contains(selector, 'id')) {
+                    key = 'eq';
+                } else if (spa_page_util.contains(selector, 'exists')) {
+                    key = 'exists';
+                } else {
+                    throw new Error('Not exists selector' + selector);
+                }
+
+                key += spa_page_util.contains(selector, '-not') ? '-not' : '';
+                return showCondMap[key];
+            };
+
+            return {
+                findShowCond: findShowCond
+            }
+        })();
+
         return {
             get_toggle_class_list: get_toggle_class_list,
             trigger: trigger,
+            show_condition: show_condition,
 
             //VisibleForTesting
             _get_bind_val: _get_bind_val,

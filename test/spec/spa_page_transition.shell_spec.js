@@ -85,4 +85,23 @@ describe('TEST | spa_page_transition.shell', function () {
             });
         });
     });
+
+
+    describe('data_bind.evt_data_bind_view.show_condition', function () {
+        var
+            data = {
+                'foo.bar': 1,
+                'foo.baz': 2,
+            },
+            attr = 'foo.bar=1',
+            selector = 'data-bind-show-if',
+            actual, expected;
+
+        it('trial', function () {
+            actual = spa_page_transition.shell.evt_data_bind_view.show_condition.findShowCond(selector).visible(data, attr);
+            expected = true;
+            expect(expected).toEqual(actual);
+        });
+    });
+
 });
