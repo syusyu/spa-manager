@@ -89,18 +89,41 @@ describe('TEST | spa_page_transition.shell', function () {
 
     describe('data_bind.evt_data_bind_view.show_condition', function () {
         var
+            sut = spa_page_transition.data_bind.evt_data_bind_view.show_condition,
+            actual,
             data = {
-                'foo.bar': 1,
-                'foo.baz': 2,
+                'bar': '1',
+                'baz': '2',
+                'list': [1, 2, 3],
+                'list_emp': [],
+                'map': {'1':1},
+                'map_emp': {},
+                'na': '',
             },
-            attr = 'foo.bar=1',
-            selector = 'data-bind-show-if',
-            actual, expected;
+            fixtures = [
+                {'title': 'eq',     'selector': 'data-bind-show-if-eq',     'attr': 'FOO.bar=1',    'expected': true},
+                {'title': 'if',     'selector': 'data-bind-show-if',        'attr': 'FOO.bar=0',    'expected': false},
+                {'title': 'not-eq', 'selector': 'data-bind-show-if-not-eq', 'attr': 'FOO.bar=0',    'expected': true},
+                {'title': 'not-eq', 'selector': 'data-bind-show-if-not-eq', 'attr': 'FOO.bar=1',    'expected': false},
+                {'title': 'empty-list',  'selector': 'data-bind-show-if-empty', 'attr': 'FOO.list_emp', 'expected': true},
+                {'title': 'empty-list',  'selector': 'data-bind-show-if-empty', 'attr': 'FOO.list', 'expected': false},
+                {'title': 'empty-map',  'selector': 'data-bind-show-if-empty', 'attr': 'FOO.map_emp', 'expected': true},
+                {'title': 'empty-map',  'selector': 'data-bind-show-if-empty', 'attr': 'FOO.map', 'expected': false},
+                {'title': 'empty-bar',  'selector': 'data-bind-show-if-empty', 'attr': 'FOO.bar', 'expected': false},
+                {'title': 'empty-na',  'selector': 'data-bind-show-if-empty', 'attr': 'FOO.na', 'expected': true},
+                {'title': 'not-empty-list',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.list_emp', 'expected': false},
+                {'title': 'not-empty-list',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.list', 'expected': true},
+                {'title': 'not-empty-map',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.map_emp', 'expected': false},
+                {'title': 'not-empty-map',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.map', 'expected': true},
+                {'title': 'not-empty-bar',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.bar', 'expected': true},
+                {'title': 'not-empty-na',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.na', 'expected': false},
+            ];
 
-        it('trial', function () {
-            actual = spa_page_transition.shell.evt_data_bind_view.show_condition.findShowCond(selector).visible(data, attr);
-            expected = true;
-            expect(expected).toEqual(actual);
+        $.each(fixtures, function (idx, f) {
+            it('idx=' + idx + '-' + f.title, function () {
+                actual = sut.findShowCond(f.selector).visible(data, f.attr);
+                expect(f.expected).toEqual(actual);
+            });
         });
     });
 

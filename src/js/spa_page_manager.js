@@ -704,7 +704,7 @@ spa_page_transition.data_bind = (function () {
             if (!bind_format) {
                 return _affix_bind_val(val, bind_affix);
             }
-            if (bind_format ==='number') {
+            if (bind_format === 'number') {
                 val = val.replace(/(\d)(?=(\d{3})+$)/g, '$1,');
             } else if (bind_format === 'date') {
                 console.warn('Not implemented yet.')
@@ -714,7 +714,7 @@ spa_page_transition.data_bind = (function () {
             return _affix_bind_val(val, bind_affix);
         };
 
-        _affix_bind_val = function(val, affix) {
+        _affix_bind_val = function (val, affix) {
             if (!affix || !val) {
                 return val;
             }
@@ -913,6 +913,9 @@ spa_page_transition.data_bind = (function () {
             });
 
 
+            $('[data-bind-show-if-eq],[data-bind-show-if-not-eq],[data-bind-show-if-empty],[data-bind-show-if-not-empty],[data-bind-show-if]').each(function (idx, el) {
+
+            });
 
 
             $('[data-bind-show-if],[data-bind-show-if-not],[data-bind-show-id],[data-bind-show-exists],[data-bind-show-exists-not]').each(function (idx, el) {
@@ -951,31 +954,12 @@ spa_page_transition.data_bind = (function () {
 
         show_condition = (function () {
             var
-                COND_TYPES = ['eq', 'exists'],
-                showCondMap = {},
-                createShowCond,
-                showCondProto, showCondEq, showCondExists,
+                COND_TYPES = ['eq', 'empty'],
+                showCondMap,
+                createShowCondMap,
+                createShowCond, createShowCondEq, createShowCondEmpty,
+                showCondProto, showCondEq, showCondEmpty,
                 findShowCond;
-
-            $.each(COND_TYPES, function (idx, el) {
-                console.log('###############################initialization of show_condition ################################')
-                showCondMap[el] = createShowCond(el);
-                showCondMap[el + '-not'] = createShowCond(el + '-not');
-            });
-
-            createShowCond = function (cond_type) {
-                var
-                    res, cond_attr;
-                if (spa_page_util.startsWith('eq')) {
-                    res = Object.create(showCondEq);
-                } else if (spa_page_util.startsWith('exists')) {
-                    res = Object.create(showCondExists);
-                } else {
-                    throw new Error('cond type NOT exists:' + cond_type);
-                }
-                res.init(spa_page_util.contains('-not'));
-                return res;
-            };
 
             showCondProto = {
                 init: function (_is_not) {
@@ -1001,12 +985,39 @@ spa_page_transition.data_bind = (function () {
                         this.cond = entity_prop_cond[1];
                     }
 
-                    return this.is_not ? !this.matched() : this.matched();
+                    return this.is_not ? !this.matches(data) : this.matches(data);
                 }
             };
 
-            showCondEq = {
-                matched: function (data) {
+            createShowCondMap = function () {
+                showCondMap = {};
+                $.each(COND_TYPES, function (idx, cond_type) {
+                    spa_page_transition.getLogger().debug('### initialization of show_condition ###')
+                    var
+                        key = cond_type;
+                    showCondMap[key] = createShowCond(cond_type);
+                    key = cond_type + '-not';
+                    showCondMap[key] = createShowCond(key);
+                });
+            };
+
+            createShowCond = function (cond_type) {
+                var
+                    res;
+                if (spa_page_util.startsWith(cond_type, 'eq')) {
+                    res = createShowCondEq();
+                } else if (spa_page_util.startsWith(cond_type, 'empty')) {
+                    res = createShowCondEmpty();
+                } else {
+                    throw new Error('cond type NOT exists:' + cond_type);
+                }
+                res.init(spa_page_util.contains(cond_type, '-not'));
+                return res;
+            };
+
+            createShowCondEq = function () {
+                var res = Object.create(showCondProto);
+                res.matches = function (data) {
                     var val = data[this.prop_tree];
                     if (!val) {
                         return false;
@@ -1015,21 +1026,42 @@ spa_page_transition.data_bind = (function () {
                     } else {
                         return true;
                     }
-                }
+                };
+                return res;
+            };
+
+            createShowCondEmpty = function () {
+                var res = Object.create(showCondProto);
+                res.matches = function (data) {
+                    var val = data[this.prop_tree];
+                    if (!val) {
+                        return true;
+                    } else if (typeof val === 'object') {
+                        return spa_page_util.isEmpty(Object.keys(val));
+                    } else {
+                        return spa_page_util.isEmpty(val);
+                    }
+                };
+                return res;
             };
 
             findShowCond = function (selector) {
                 var key;
-                if (spa_page_util.contains(selector, 'eq') || spa_page_util.contains(selector, 'if') || spa_page_util.contains(selector, 'id')) {
+                if (spa_page_util.isEmpty(showCondMap)) {
+                    createShowCondMap();
+                }
+
+                if (spa_page_util.contains(selector, 'empty')) {
+                    key = 'empty';
+                } else if (spa_page_util.contains(selector, 'show-if-eq') || spa_page_util.contains(selector, 'show-if') || spa_page_util.contains(selector, 'show-id')) {
                     key = 'eq';
-                } else if (spa_page_util.contains(selector, 'exists')) {
-                    key = 'exists';
                 } else {
-                    throw new Error('Not exists selector' + selector);
+                    throw new Error('Not empty selector' + selector);
                 }
 
                 key += spa_page_util.contains(selector, '-not') ? '-not' : '';
-                return showCondMap[key];
+                var res = showCondMap[key];
+                return res;
             };
 
             return {
