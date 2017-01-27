@@ -90,7 +90,6 @@ describe('TEST | spa_page_transition.shell', function () {
     describe('data_bind.evt_data_bind_view.show_condition', function () {
         var
             sut = spa_page_transition.data_bind.evt_data_bind_view.show_condition,
-            actual,
             data = {
                 'bar': '1',
                 'baz': '2',
@@ -121,8 +120,10 @@ describe('TEST | spa_page_transition.shell', function () {
 
         $.each(fixtures, function (idx, f) {
             it('idx=' + idx + '-' + f.title, function () {
-                actual = sut.findShowCond(f.selector).visible(data, f.attr);
-                expect(f.expected).toEqual(actual);
+                var matched_show_cond = sut.findShowCond(f.selector).prepare(data, f.attr);
+                if (matched_show_cond.is_target('FOO')) {
+                    expect(f.expected).toEqual(matched_show_cond.visible());
+                }
             });
         });
     });

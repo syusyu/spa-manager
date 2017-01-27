@@ -923,12 +923,18 @@ spa_page_transition.data_bind = (function () {
 
             $(all_show_cond_selectors).each(function (idx, el) {
                 $.each(SHOW_COND_SELECTORS, function (attr_idx, selector) {
-                    var attr_val = $(el).attr(selector);
+                    var
+                        attr_val = $(el).attr(selector),
+                        matched_show_cond;
+
                     if (attr_val) {
-                        if (show_condition.findShowCond(selector).visible(data, attr_val)) {
-                            $(el).show();
-                        } else {
-                            $(el).hide();
+                        matched_show_cond = show_condition.findShowCond(selector).prepare(data, attr_val);
+                        if (matched_show_cond.is_target(key)) {
+                            if (matched_show_cond.visible()) {
+                                $(el).show();
+                            } else {
+                                $(el).hide();
+                            }
                         }
                     }
                 });
@@ -945,30 +951,40 @@ spa_page_transition.data_bind = (function () {
                 findShowCond;
 
             showCondProto = {
-                init: function (_is_not) {
+                set_not: function (_is_not) {
                     this.is_not = _is_not;
                 },
-                visible: function (data, attr) {
+                prepare: function (data, attr) {
                     var
                         entity_prop, entity_prop_cond;
+                    this.prepared = true;
                     if (!data) {
                         console.warn('###invisible');
-                        return false;
+                        return;
                     }
 
                     entity_prop_cond = attr.split('=');
                     entity_prop = entity_prop_cond[0].split('\.');
                     if (!entity_prop) {
                         console.warn('###invisible entity_prop');
-                        return false;
+                        return;
                     }
                     this.entity = entity_prop[0];
                     this.prop_tree = entity_prop[1];
                     if (entity_prop_cond.length > 1) {
                         this.cond = entity_prop_cond[1];
                     }
-
-                    return this.is_not ? !this.matches(data) : this.matches(data);
+                    this.data = data;
+                    return this;
+                },
+                is_target: function (key) {
+                    return this.entity && key === this.entity;
+                },
+                visible: function () {
+                    if (!this.prepared) {
+                        throw new Error('Call prepare method before calling visible method!');
+                    }
+                    return this.is_not ? !this.matches(this.data) : this.matches(this.data);
                 }
             };
 
@@ -994,7 +1010,7 @@ spa_page_transition.data_bind = (function () {
                 } else {
                     throw new Error('cond type NOT exists:' + cond_type);
                 }
-                res.init(spa_page_util.contains(cond_type, '-not'));
+                res.set_not(spa_page_util.contains(cond_type, '-not'));
                 return res;
             };
 
