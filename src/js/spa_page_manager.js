@@ -625,7 +625,16 @@ spa_page_transition.data_bind = (function () {
             get_toggle_class_list,
             trigger, show_condition,
 
-            BIND_ATTR_TYPES = ['id', 'text', 'text1', 'text2', 'text3', 'html', 'val', 'loop', 'selected'];
+            BIND_ATTR_TYPES = ['id', 'text', 'text1', 'text2', 'text3', 'html', 'val', 'loop', 'selected'],
+            SHOW_COND_SELECTORS = [
+                'data-bind-show-if-eq', 'data-bind-show-if-not-eq', 'data-bind-show-if-empty', 'data-bind-show-if-not-empty',
+                'data-bind-show-if', 'data-bind-show-id'],
+            all_selectors;
+
+        $.each(SHOW_COND_SELECTORS, function (idx, selector) {
+            all_selectors += idx > 0 ? ',' : '';
+            all_selectors += '[' + selector + ']';
+        });
 
         _init_bind_prop_map = function (key, data) {
             $('[' + BIND_ATTR_REPLACED_KEY + ']').each(function (idx, el) {
@@ -912,44 +921,51 @@ spa_page_transition.data_bind = (function () {
                 });
             });
 
-
-            $('[data-bind-show-if-eq],[data-bind-show-if-not-eq],[data-bind-show-if-empty],[data-bind-show-if-not-empty],[data-bind-show-if]').each(function (idx, el) {
-
-            });
-
-
-            $('[data-bind-show-if],[data-bind-show-if-not],[data-bind-show-id],[data-bind-show-exists],[data-bind-show-exists-not]').each(function (idx, el) {
-                var
-                    pure_attr, obj_key_cond_list, obj_key_list, cond, val;
-
-                if (!data) {
-                    $(el).hide();
-                    console.warn('data-bind-show-if.data is null');
-                    return true;
-                }
-
-                pure_attr = $(el).attr('data-bind-show-if') ? $(el).attr('data-bind-show-if') : $(el).attr('data-bind-show-id');
-                if (!pure_attr) {
-                    return true;
-                }
-
-                obj_key_cond_list = pure_attr.split('=');
-                obj_key_list = obj_key_cond_list[0].split('\.');
-                if (obj_key_cond_list.length > 1) {
-                    cond = obj_key_cond_list[1];
-                }
-
-                if (obj_key_list && obj_key_list[0] === key) {
-                    val = data[obj_key_list[1]];
-                    if (!val) {
-                        $(el).hide();
-                    } else if (cond && cond !== val) {
-                        $(el).hide();
-                    } else {
-                        $(el).show();
+            $(all_selectors).each(function (idx, el) {
+                $.each(SHOW_COND_SELECTORS, function (attr_idx, selector) {
+                    var attr_val = $(el).attr(selector);
+                    if (attr_val) {
+                        if (show_condition.findShowCond(selector).visible(data, attr_val)) {
+                            $(el).show();
+                        } else {
+                            $(el).hide();
+                        }
                     }
-                }
+                });
             });
+
+            // $('[data-bind-show-if],[data-bind-show-if-not],[data-bind-show-id],[data-bind-show-exists],[data-bind-show-exists-not]').each(function (idx, el) {
+            //     var
+            //         pure_attr, obj_key_cond_list, obj_key_list, cond, val;
+            //
+            //     if (!data) {
+            //         $(el).hide();
+            //         console.warn('data-bind-show-if.data is null');
+            //         return true;
+            //     }
+            //
+            //     pure_attr = $(el).attr('data-bind-show-if') ? $(el).attr('data-bind-show-if') : $(el).attr('data-bind-show-id');
+            //     if (!pure_attr) {
+            //         return true;
+            //     }
+            //
+            //     obj_key_cond_list = pure_attr.split('=');
+            //     obj_key_list = obj_key_cond_list[0].split('\.');
+            //     if (obj_key_cond_list.length > 1) {
+            //         cond = obj_key_cond_list[1];
+            //     }
+            //
+            //     if (obj_key_list && obj_key_list[0] === key) {
+            //         val = data[obj_key_list[1]];
+            //         if (!val) {
+            //             $(el).hide();
+            //         } else if (cond && cond !== val) {
+            //             $(el).hide();
+            //         } else {
+            //             $(el).show();
+            //         }
+            //     }
+            // });
         };
 
         show_condition = (function () {
@@ -969,14 +985,14 @@ spa_page_transition.data_bind = (function () {
                     var
                         entity_prop, entity_prop_cond;
                     if (!data) {
-                        console.warn('########invisible');
+                        console.warn('###invisible');
                         return false;
                     }
 
                     entity_prop_cond = attr.split('=');
                     entity_prop = entity_prop_cond[0].split('\.');
                     if (!entity_prop) {
-                        console.warn('########invisible entity_prop');
+                        console.warn('###invisible entity_prop');
                         return false;
                     }
                     this.entity = entity_prop[0];
@@ -990,9 +1006,9 @@ spa_page_transition.data_bind = (function () {
             };
 
             createShowCondMap = function () {
+                spa_page_transition.getLogger().debug('### initialization of show_condition ###')
                 showCondMap = {};
                 $.each(COND_TYPES, function (idx, cond_type) {
-                    spa_page_transition.getLogger().debug('### initialization of show_condition ###')
                     var
                         key = cond_type;
                     showCondMap[key] = createShowCond(cond_type);

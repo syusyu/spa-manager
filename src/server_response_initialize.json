@@ -80,5 +80,22 @@
   "init_data": {
     "service_start_req_date": "2016/10/10",
     "change_fee": "5000"
-  }
+  },
+  "history_list" : [
+    {"year": "2017", "month": "1", "day": "25", "amount": "2G"},
+    {"year": "2017", "month": "1", "day": "15", "amount": "1G"},
+    {"year": "2017", "month": "1", "day": "5", "amount": "900M"},
+    {"year": "2016", "month": "12", "day": "25", "amount": "800M"},
+    {"year": "2016", "month": "12", "day": "15", "amount": "700M"},
+    {"year": "2016", "month": "12", "day": "5", "amount": "600M"},
+    {"year": "2016", "month": "11", "day": "25", "amount": "500M"},
+    {"year": "2016", "month": "11", "day": "15", "amount": "400M"},
+    {"year": "2016", "month": "11", "day": "5", "amount": "300M"}
+  ],
+  "history_filter_list" : [
+    {"year": "2017", "month": "1"},
+    {"year": "2016", "month": "12"},
+    {"year": "2016", "month": "11"}
+  ]
+
 }

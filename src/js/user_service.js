@@ -16,14 +16,18 @@ var plan_change = (function () {
             PATH_CANCEL = server_host + '/server_response_update_cancel.json',
 
             initializationFunc = spa_page_transition.createAjaxFunc(PATH_INIT, send_params, function (observer, anchor_map, data) {
-                plan_change.getLogger().debug('initial data loaded! status', data.status, 'init_data', data.init_data);
+                plan_change.getLogger().debug('initial data loaded! status', data.status, 'data', data);
                 if (data.status !== '0') {
                     observer.error('Invalid initial data');
                     return;
                 }
                 plan_change.model.serverData.setInitData(data.init_data);
                 plan_change.model.serverData.setPlanList(data.plan_list);
+                plan_change.model.serverData.setHistoryList(data.history_list);
+                plan_change.model.serverData.setHistoryFilterList(data.history_filter_list);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
+                observer.trigger('HISTORY', plan_change.model.serverData.getHistoryList());
+                observer.trigger('HISTORY_FILTER', plan_change.model.serverData.getHistoryFilterList());
                 selectDefaultPlan.execute();
             }),
 
@@ -154,7 +158,9 @@ plan_change.model = (function () {
     serverData = (function () {
         var
             planList, getPlanList, setPlanList, findPlan,
-            initData, getInitData, setInitData;
+            initData, getInitData, setInitData,
+            historyList, getHistoryList, setHistoryList,
+            historyFilterList, getHistoryFilterList, setHistoryFilterList;
 
         getInitData = function () {
             return initData;
@@ -172,6 +178,18 @@ plan_change.model = (function () {
         setPlanList = function (plan_list) {
             planList = plan_list;
         };
+        getHistoryList = function () {
+            return historyList;
+        };
+        setHistoryList = function (history_list) {
+            historyList = history_list;
+        };
+        getHistoryFilterList = function () {
+            return historyFilterList;
+        };
+        setHistoryFilterList = function (history_filter_list) {
+            historyFilterList = history_filter_list;
+        };
         findPlan = function (id) {
             if (!id) {
                 return null;
@@ -187,6 +205,10 @@ plan_change.model = (function () {
             existsPlan: existsPlan,
             getPlanList: getPlanList,
             setPlanList: setPlanList,
+            getHistoryList: getHistoryList,
+            setHistoryList: setHistoryList,
+            getHistoryFilterList: getHistoryFilterList,
+            setHistoryFilterList: setHistoryFilterList,
             findPlan: findPlan,
         }
     })();
