@@ -629,11 +629,11 @@ spa_page_transition.data_bind = (function () {
             SHOW_COND_SELECTORS = [
                 'data-bind-show-if-eq', 'data-bind-show-if-not-eq', 'data-bind-show-if-empty', 'data-bind-show-if-not-empty',
                 'data-bind-show-if', 'data-bind-show-id'],
-            all_selectors;
+            all_show_cond_selectors = '';
 
         $.each(SHOW_COND_SELECTORS, function (idx, selector) {
-            all_selectors += idx > 0 ? ',' : '';
-            all_selectors += '[' + selector + ']';
+            all_show_cond_selectors += idx > 0 ? ',' : '';
+            all_show_cond_selectors += '[' + selector + ']';
         });
 
         _init_bind_prop_map = function (key, data) {
@@ -921,7 +921,7 @@ spa_page_transition.data_bind = (function () {
                 });
             });
 
-            $(all_selectors).each(function (idx, el) {
+            $(all_show_cond_selectors).each(function (idx, el) {
                 $.each(SHOW_COND_SELECTORS, function (attr_idx, selector) {
                     var attr_val = $(el).attr(selector);
                     if (attr_val) {
@@ -933,39 +933,6 @@ spa_page_transition.data_bind = (function () {
                     }
                 });
             });
-
-            // $('[data-bind-show-if],[data-bind-show-if-not],[data-bind-show-id],[data-bind-show-exists],[data-bind-show-exists-not]').each(function (idx, el) {
-            //     var
-            //         pure_attr, obj_key_cond_list, obj_key_list, cond, val;
-            //
-            //     if (!data) {
-            //         $(el).hide();
-            //         console.warn('data-bind-show-if.data is null');
-            //         return true;
-            //     }
-            //
-            //     pure_attr = $(el).attr('data-bind-show-if') ? $(el).attr('data-bind-show-if') : $(el).attr('data-bind-show-id');
-            //     if (!pure_attr) {
-            //         return true;
-            //     }
-            //
-            //     obj_key_cond_list = pure_attr.split('=');
-            //     obj_key_list = obj_key_cond_list[0].split('\.');
-            //     if (obj_key_cond_list.length > 1) {
-            //         cond = obj_key_cond_list[1];
-            //     }
-            //
-            //     if (obj_key_list && obj_key_list[0] === key) {
-            //         val = data[obj_key_list[1]];
-            //         if (!val) {
-            //             $(el).hide();
-            //         } else if (cond && cond !== val) {
-            //             $(el).hide();
-            //         } else {
-            //             $(el).show();
-            //         }
-            //     }
-            // });
         };
 
         show_condition = (function () {
@@ -1051,10 +1018,13 @@ spa_page_transition.data_bind = (function () {
                 res.matches = function (data) {
                     var val = data[this.prop_tree];
                     if (!val) {
+                        console.log('#####val=' + val + ', prop=' + this.prop_tree + ', data=' + JSON.stringify(data) + ', empty=true');
                         return true;
                     } else if (typeof val === 'object') {
+                        console.log('#####val=' + val + ', prop=' + this.prop_tree + ', data=' + JSON.stringify(data) + ', map.empty=' + spa_page_util.isEmpty(Object.keys(val)));
                         return spa_page_util.isEmpty(Object.keys(val));
                     } else {
+                        console.log('#####val=' + val + ', prop=' + this.prop_tree + ', data=' + JSON.stringify(data) + ', other.empty=' + spa_page_util.isEmpty(val));
                         return spa_page_util.isEmpty(val);
                     }
                 };

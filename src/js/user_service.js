@@ -23,11 +23,9 @@ var plan_change = (function () {
                 }
                 plan_change.model.serverData.setInitData(data.init_data);
                 plan_change.model.serverData.setPlanList(data.plan_list);
-                plan_change.model.serverData.setHistoryList(data.history_list);
-                plan_change.model.serverData.setHistoryFilterList(data.history_filter_list);
+                plan_change.model.serverData.setHistory(data.history);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
-                observer.trigger('HISTORY', plan_change.model.serverData.getHistoryList());
-                observer.trigger('HISTORY_FILTER', plan_change.model.serverData.getHistoryFilterList());
+                observer.trigger('HISTORY', plan_change.model.serverData.getHistory());
                 selectDefaultPlan.execute();
             }),
 
@@ -159,8 +157,7 @@ plan_change.model = (function () {
         var
             planList, getPlanList, setPlanList, findPlan,
             initData, getInitData, setInitData,
-            historyList, getHistoryList, setHistoryList,
-            historyFilterList, getHistoryFilterList, setHistoryFilterList;
+            history, getHistory, setHistory;
 
         getInitData = function () {
             return initData;
@@ -178,17 +175,11 @@ plan_change.model = (function () {
         setPlanList = function (plan_list) {
             planList = plan_list;
         };
-        getHistoryList = function () {
-            return historyList;
+        getHistory = function () {
+            return history;
         };
-        setHistoryList = function (history_list) {
-            historyList = history_list;
-        };
-        getHistoryFilterList = function () {
-            return historyFilterList;
-        };
-        setHistoryFilterList = function (history_filter_list) {
-            historyFilterList = history_filter_list;
+        setHistory = function (_history) {
+            history = _history;
         };
         findPlan = function (id) {
             if (!id) {
@@ -205,10 +196,8 @@ plan_change.model = (function () {
             existsPlan: existsPlan,
             getPlanList: getPlanList,
             setPlanList: setPlanList,
-            getHistoryList: getHistoryList,
-            setHistoryList: setHistoryList,
-            getHistoryFilterList: getHistoryFilterList,
-            setHistoryFilterList: setHistoryFilterList,
+            getHistory: getHistory,
+            setHistory: setHistory,
             findPlan: findPlan,
         }
     })();

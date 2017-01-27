@@ -203,7 +203,26 @@
             <p>プラン： WonderLink LITE-A ミディアム (4G) + 500円</p>
         </div>
 
-        <div data-bind-
+        <div data-bind-show-if-empty="HISTORY.history_list">
+            No history
+        </div>
+        <div data-bind-show-if-not-empty="HISTORY.history_list">
+            <table class="tbl_history">
+                <thead>
+                <tr>
+                    <th>Date</th><th>Amount</th>
+                </tr>
+                </thead>
+                <tbody data-bind-loop="HISTORY.history_list">
+                <tr>
+                    <td data-bind-text1="HISTORY.history_list.year" data-bind-text2="HISTORY.history_list.month"
+                        data-bind-text3="HISTORY.history_list.day" data-bind-text-separator="/"></td>
+                    <td data-bind-text="HISTORY.history_list.amount"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
         <div class="plan-change-cancel-btn-area">
             <div>
                 <label class="plan-change-cancel-check">
