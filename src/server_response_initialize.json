@@ -81,7 +81,7 @@
     "service_start_req_date": "2016/10/10",
     "change_fee": "5000"
   },
-  "history": {
+  "history" : {
     "history_list" : [
       {"year": "2017", "month": "1", "day": "25", "amount": "2G"},
       {"year": "2017", "month": "1", "day": "15", "amount": "1G"},
@@ -96,7 +96,8 @@
     "history_filter_list" : [
       {"year": "2017", "month": "1"},
       {"year": "2016", "month": "12"},
-      {"year": "2016", "month": "11"}
+      {"year": "2016", "month": "11"},
+      {"year": "all", "month": "all"}
     ]
   }
 }

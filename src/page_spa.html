@@ -32,6 +32,34 @@
             <p>プランを変更することができます。</p>
             <p>お申し込み後のキャンセルはできません。事前の注意事項をご確認の上、お手続きをお願いいたします。</p>
         </div>
+        <div data-bind-show-if-empty="HISTORY.history_list">
+            No history
+        </div>
+
+        <div data-bind-show-if-not-empty="HISTORY.history_list">
+            <table class="tbl_history">
+                <thead>
+                <tr>
+                    <th>Date</th><th>Amount</th>
+                </tr>
+                </thead>
+                <tbody data-bind-loop="HISTORY.history_list">
+                <tr>
+                    <td data-bind-text1="HISTORY.history_list.year" data-bind-text2="HISTORY.history_list.month"
+                        data-bind-text3="HISTORY.history_list.day" data-bind-text-separator="/"></td>
+                    <td data-bind-text="HISTORY.history_list.amount"></td>
+                </tr>
+                </tbody>
+            </table>
+
+
+            <select data-bind-loop="HISTORY.history_filter_list" data-action-change-id="filter-history" data-action-change-params="val">
+                <option
+                        data-bind-text1="HISTORY.history_filter_list.year" data-bind-text2="HISTORY.history_filter_list.month" data-bind-text-separator="/"
+                        data-bind-val1="HISTORY.history_filter_list.year" data-bind-val2="HISTORY.history_filter_list.month" data-bind-val-separator="-"
+                ></option>
+            </select>
+        </div>
 
         <div class="box current-plan">
             <p>契約番号： 090-XXXX-XXX1</p>
@@ -201,26 +229,6 @@
         <div class="box new-plan-list">
             <p>契約番号： 090-XXXX-XXX2</p>
             <p>プラン： WonderLink LITE-A ミディアム (4G) + 500円</p>
-        </div>
-
-        <div data-bind-show-if-empty="HISTORY.history_list">
-            No history
-        </div>
-        <div data-bind-show-if-not-empty="HISTORY.history_list">
-            <table class="tbl_history">
-                <thead>
-                <tr>
-                    <th>Date</th><th>Amount</th>
-                </tr>
-                </thead>
-                <tbody data-bind-loop="HISTORY.history_list">
-                <tr>
-                    <td data-bind-text1="HISTORY.history_list.year" data-bind-text2="HISTORY.history_list.month"
-                        data-bind-text3="HISTORY.history_list.day" data-bind-text-separator="/"></td>
-                    <td data-bind-text="HISTORY.history_list.amount"></td>
-                </tr>
-                </tbody>
-            </table>
         </div>
 
         <div class="plan-change-cancel-btn-area">

@@ -23,7 +23,7 @@ var plan_change = (function () {
                 }
                 plan_change.model.serverData.setInitData(data.init_data);
                 plan_change.model.serverData.setPlanList(data.plan_list);
-                plan_change.model.serverData.setHistory(data.history);
+                plan_change.model.serverData.setHistory(data);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
                 observer.trigger('HISTORY', plan_change.model.serverData.getHistory());
                 selectDefaultPlan.execute();
@@ -55,14 +55,19 @@ var plan_change = (function () {
                     observer.error('');
                     return;
                 }
-                }).get_params(plan_change.shell.getParamForUpdate),
+            }).get_params(plan_change.shell.getParamForUpdate),
 
             cancelPlan = spa_page_transition.createAjaxFunc(PATH_CANCEL, function (observer, anchor_map, data) {
                 if (data.status !== '0') {
                     observer.error('');
                     return;
                 }
-            }).get_params(plan_change.shell.getParamForCancel);
+            }).get_params(plan_change.shell.getParamForCancel),
+
+            filterHistory = spa_page_transition.createFunc(function (observer, anchor_map) {
+                logger.debug('filterHistory is called. selected_val', anchor_map.val);
+                observer.trigger('HISTORY', plan_change.model.serverData.filterHistory(anchor_map.val));
+            });
 
         logger = spa_log.createLogger(is_debug_mode, '### PLAN_CHANGE.LOG ###');
 
@@ -76,6 +81,7 @@ var plan_change = (function () {
             .addAction('update', 'complete', [updatePlan])
             .addAction('cancel-init', 'cancel')
             .addAction('cancel', 'cancel-complete', [cancelPlan])
+            .addAction('filter-history', 'list', [filterHistory])
             .addAction('popup-warning', 'warning')
             .run();
     };
@@ -157,7 +163,7 @@ plan_change.model = (function () {
         var
             planList, getPlanList, setPlanList, findPlan,
             initData, getInitData, setInitData,
-            history, getHistory, setHistory;
+            history, getHistory, setHistory, filterHistory;
 
         getInitData = function () {
             return initData;
@@ -178,8 +184,8 @@ plan_change.model = (function () {
         getHistory = function () {
             return history;
         };
-        setHistory = function (_history) {
-            history = _history;
+        setHistory = function (data) {
+            history = data.history;
         };
         findPlan = function (id) {
             if (!id) {
@@ -188,6 +194,18 @@ plan_change.model = (function () {
             return planList.filter(function (obj, idx) {
                     return obj.id === id
                 })[0] || null;
+        };
+        filterHistory = function (selected_filter) {
+            var
+                y_m = selected_filter.split('-'),
+                y = y_m[0],
+                m = y_m[1],
+                new_history = {};
+            new_history.history_list = history.history_list.filter(function (el) {
+                return el.year === y && el.month === m;
+            });
+            new_history.history_filter_list = history.history_filter_list;
+            return new_history;
         };
 
         return {
@@ -198,6 +216,7 @@ plan_change.model = (function () {
             setPlanList: setPlanList,
             getHistory: getHistory,
             setHistory: setHistory,
+            filterHistory: filterHistory,
             findPlan: findPlan,
         }
     })();

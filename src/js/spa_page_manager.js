@@ -625,7 +625,7 @@ spa_page_transition.data_bind = (function () {
             get_toggle_class_list,
             trigger, show_condition,
 
-            BIND_ATTR_TYPES = ['id', 'text', 'text1', 'text2', 'text3', 'html', 'val', 'loop', 'selected'],
+            BIND_ATTR_TYPES = ['id', 'text', 'text1', 'text2', 'text3', 'html', 'val', 'val1', 'val2', 'val3', 'loop', 'selected'],
             SHOW_COND_SELECTORS = [
                 'data-bind-show-if-eq', 'data-bind-show-if-not-eq', 'data-bind-show-if-empty', 'data-bind-show-if-not-empty',
                 'data-bind-show-if', 'data-bind-show-id'],
@@ -739,6 +739,7 @@ spa_page_transition.data_bind = (function () {
                 format = $el.attr('data-bind-format-' + attr) || $el.attr('data-bind-format'),
                 affix = $el.attr('data-bind-affix-' + attr),
                 separator = $el.attr('data-bind-text-separator') || '',
+                val_separator = $el.attr('data-bind-val-separator') || '',
                 val = _format_bind_val(data, prop_key, format, affix);
 
             if (attr === 'text') {
@@ -754,6 +755,13 @@ spa_page_transition.data_bind = (function () {
                 $el.html(val);
             } else if (attr === 'val') {
                 $el.val(val);
+            } else if (attr === 'val1' || attr === 'val2' || attr === 'val3') {
+                prev_val = $el.attr('value');
+                if (prev_val) {
+                    $el.val(prev_val + val_separator + val);
+                } else {
+                    $el.val(val);
+                }
             } else if (attr === 'selected') {
                 $el.attr(attr, 'selected');
             } else {
@@ -823,6 +831,7 @@ spa_page_transition.data_bind = (function () {
             }
 
             $.each(cloned_elements, function (idx, $el_child) {
+                $($el_child).show();
                 $(el).append($el_child);
             });
             $.each(clone_target_elements, function (idx, $el_child) {
@@ -833,13 +842,13 @@ spa_page_transition.data_bind = (function () {
         };
 
         _replace_cloned_element_attr = function ($el, loop_prop_key, i) {
+            $el.attr(BIND_ATTR_REPLACED_KEY, loop_prop_key);
             _each_attr_type(function (bind_attr_type, attr_type) {
                 var
                     bind_attr = $el.attr(bind_attr_type);
 
                 if (bind_attr) {
                     $el.attr(bind_attr_type, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
-                    $el.attr(BIND_ATTR_REPLACED_KEY, loop_prop_key);
                 }
             });
         };
@@ -1034,13 +1043,10 @@ spa_page_transition.data_bind = (function () {
                 res.matches = function (data) {
                     var val = data[this.prop_tree];
                     if (!val) {
-                        console.log('#####val=' + val + ', prop=' + this.prop_tree + ', data=' + JSON.stringify(data) + ', empty=true');
                         return true;
                     } else if (typeof val === 'object') {
-                        console.log('#####val=' + val + ', prop=' + this.prop_tree + ', data=' + JSON.stringify(data) + ', map.empty=' + spa_page_util.isEmpty(Object.keys(val)));
                         return spa_page_util.isEmpty(Object.keys(val));
                     } else {
-                        console.log('#####val=' + val + ', prop=' + this.prop_tree + ', data=' + JSON.stringify(data) + ', other.empty=' + spa_page_util.isEmpty(val));
                         return spa_page_util.isEmpty(val);
                     }
                 };
