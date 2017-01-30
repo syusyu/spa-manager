@@ -23,9 +23,10 @@ var plan_change = (function () {
                 }
                 plan_change.model.serverData.setInitData(data.init_data);
                 plan_change.model.serverData.setPlanList(data.plan_list);
-                plan_change.model.serverData.setHistory(data);
+                plan_change.model.serverData.initHistory(data);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
-                observer.trigger('HISTORY', plan_change.model.serverData.getHistory());
+                observer.trigger('HISTORY', plan_change.model.serverData.getHistoryList());
+                observer.trigger('HISTORY_FILTER', plan_change.model.serverData.getHistoryFilterList());
                 selectDefaultPlan.execute();
             }),
 
@@ -64,9 +65,9 @@ var plan_change = (function () {
                 }
             }).get_params(plan_change.shell.getParamForCancel),
 
-            filterHistory = spa_page_transition.createFunc(function (observer, anchor_map) {
-                logger.debug('filterHistory is called. selected_val', anchor_map.val);
-                observer.trigger('HISTORY', plan_change.model.serverData.filterHistory(anchor_map.val));
+            filterHistoryList = spa_page_transition.createFunc(function (observer, anchor_map) {
+                logger.debug('filterHistoryList is called. selected_val', anchor_map.val);
+                observer.trigger('HISTORY', plan_change.model.serverData.filterHistoryList(anchor_map.val));
             });
 
         logger = spa_log.createLogger(is_debug_mode, '### PLAN_CHANGE.LOG ###');
@@ -81,7 +82,7 @@ var plan_change = (function () {
             .addAction('update', 'complete', [updatePlan])
             .addAction('cancel-init', 'cancel')
             .addAction('cancel', 'cancel-complete', [cancelPlan])
-            .addAction('filter-history', 'list', [filterHistory])
+            .addAction('filter-history', 'list', [filterHistoryList])
             .addAction('popup-warning', 'warning')
             .run();
     };
@@ -163,7 +164,9 @@ plan_change.model = (function () {
         var
             planList, getPlanList, setPlanList, findPlan,
             initData, getInitData, setInitData,
-            history, getHistory, setHistory, filterHistory;
+            initHistory, filterHistoryList,
+            history_list, getHistoryList,
+            history_filter_list, getHistoryFilterList;
 
         getInitData = function () {
             return initData;
@@ -181,12 +184,6 @@ plan_change.model = (function () {
         setPlanList = function (plan_list) {
             planList = plan_list;
         };
-        getHistory = function () {
-            return history;
-        };
-        setHistory = function (data) {
-            history = data.history;
-        };
         findPlan = function (id) {
             if (!id) {
                 return null;
@@ -195,17 +192,25 @@ plan_change.model = (function () {
                     return obj.id === id
                 })[0] || null;
         };
-        filterHistory = function (selected_filter) {
+        initHistory = function (data) {
+            history_list = data.history_list;
+            history_filter_list = data.history_filter_list;
+        };
+        getHistoryList = function () {
+            return {'history_list': history_list};
+        };
+        getHistoryFilterList = function () {
+            return {'history_filter_list': history_filter_list};
+        };
+        filterHistoryList = function (selected_filter) {
             var
                 y_m = selected_filter.split('-'),
                 y = y_m[0],
                 m = y_m[1],
-                new_history = {};
-            new_history.history_list = history.history_list.filter(function (el) {
-                return el.year === y && el.month === m;
-            });
-            new_history.history_filter_list = history.history_filter_list;
-            return new_history;
+                new_history_list = history_list.filter(function (el) {
+                    return el.year === y && el.month === m;
+                });
+            return {'history_list': new_history_list};
         };
 
         return {
@@ -214,10 +219,11 @@ plan_change.model = (function () {
             existsPlan: existsPlan,
             getPlanList: getPlanList,
             setPlanList: setPlanList,
-            getHistory: getHistory,
-            setHistory: setHistory,
-            filterHistory: filterHistory,
             findPlan: findPlan,
+            initHistory: initHistory,
+            getHistoryList: getHistoryList,
+            getHistoryFilterList: getHistoryFilterList,
+            filterHistoryList: filterHistoryList,
         }
     })();
 

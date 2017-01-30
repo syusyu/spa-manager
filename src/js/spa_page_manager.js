@@ -639,7 +639,7 @@ spa_page_transition.data_bind = (function () {
         _init_bind_prop_map = function (key, data) {
             $('[' + BIND_ATTR_REPLACED_KEY + ']').each(function (idx, el) {
                 var replaced_key = $(el).attr(BIND_ATTR_REPLACED_KEY);
-                if (spa_page_util.startsWith(replaced_key, key)) {
+                if (spa_page_util.startsWith(replaced_key, key + '.')) {
                     $(el).remove();
                 }
             });

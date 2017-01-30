@@ -52,12 +52,9 @@
                 </tbody>
             </table>
 
-
-            <select data-bind-loop="HISTORY.history_filter_list" data-action-change-id="filter-history" data-action-change-params="val">
-                <option
-                        data-bind-text1="HISTORY.history_filter_list.year" data-bind-text2="HISTORY.history_filter_list.month" data-bind-text-separator="/"
-                        data-bind-val1="HISTORY.history_filter_list.year" data-bind-val2="HISTORY.history_filter_list.month" data-bind-val-separator="-"
-                ></option>
+            <select data-bind-loop="HISTORY_FILTER.history_filter_list" data-action-change-id="filter-history" data-action-change-params="val">
+                <option data-bind-text1="HISTORY_FILTER.history_filter_list.year" data-bind-text2="HISTORY_FILTER.history_filter_list.month" data-bind-text-separator="/"
+                        data-bind-val1="HISTORY_FILTER.history_filter_list.year" data-bind-val2="HISTORY_FILTER.history_filter_list.month" data-bind-val-separator="-"></option>
             </select>
         </div>
 
