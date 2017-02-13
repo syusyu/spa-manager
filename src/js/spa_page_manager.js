@@ -572,6 +572,17 @@ spa_page_transition.shell = (function () {
             $.uriAnchor.setAnchor(anchorGetter.createAnchorMap($(this), 'data-action-click-id', 'data-action-click-params'));
         });
 
+        $('*[data-action-force-click-id]').on('click', function (e) {
+            var
+                prev_anchor, new_anchor;
+            prev_anchor = document.location.hash;
+            $.uriAnchor.setAnchor(anchorGetter.createAnchorMap($(this), 'data-action-force-click-id', 'data-action-click-params'));
+            new_anchor = document.location.hash;
+            if (prev_anchor === new_anchor) {
+                execAction($.uriAnchor.makeAnchorMap());
+            }
+        });
+
         $('*[data-action-change-id]').on('change', function (e) {
             $.uriAnchor.setAnchor(anchorGetter.createAnchorMap($(this), 'data-action-change-id', 'data-action-change-params'));
         });
@@ -965,7 +976,7 @@ spa_page_transition.data_bind = (function () {
                 },
                 prepare: function (data, attr) {
                     var
-                        entity_prop, entity_prop_cond;
+                        entity_prop, _prop_tree, entity_prop_cond;
                     this.prepared = true;
                     if (!data) {
                         console.warn('###invisible');
@@ -979,7 +990,13 @@ spa_page_transition.data_bind = (function () {
                         return;
                     }
                     this.entity = entity_prop[0];
-                    this.prop_tree = entity_prop[1];
+                    _prop_tree = entity_prop[1];
+                    $.each(entity_prop, function (idx, el) {
+                        if (idx > 1) {
+                            _prop_tree += '.' + el;
+                        }
+                    });
+                    this.prop_tree = _prop_tree;
                     if (entity_prop_cond.length > 1) {
                         this.cond = entity_prop_cond[1];
                     }
