@@ -95,7 +95,6 @@
   "history_filter_list" : [
     {"year": "2017", "month": "1"},
     {"year": "2016", "month": "12"},
-    {"year": "2016", "month": "11"},
-    {"year": "all", "month": "all"}
+    {"year": "2016", "month": "11"}
   ]
 }

@@ -98,6 +98,10 @@ describe('TEST | spa_page_transition.shell', function () {
                 'map': {'1':1},
                 'map_emp': {},
                 'na': '',
+                'h1': [
+                    {'h21': '21'},
+                    {'h22': '22'}
+                ]
             },
             fixtures = [
                 {'title': 'eq',     'selector': 'data-bind-show-if-eq',     'attr': 'FOO.bar=1',    'expected': true},
@@ -116,6 +120,8 @@ describe('TEST | spa_page_transition.shell', function () {
                 {'title': 'not-empty-map',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.map', 'expected': true},
                 {'title': 'not-empty-bar',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.bar', 'expected': true},
                 {'title': 'not-empty-na',  'selector': 'data-bind-show-if-not-empty', 'attr': 'FOO.na', 'expected': false},
+                {'title': 'hierarcy', 'selector': 'data-bind-show-if-eq', 'attr': 'FOO.h1$0.h21=22', 'expected': false},
+                {'title': 'hierarcy', 'selector': 'data-bind-show-if-eq', 'attr': 'FOO.h1$1.h22=22', 'expected': true},
             ];
 
         $.each(fixtures, function (idx, f) {
@@ -127,5 +133,6 @@ describe('TEST | spa_page_transition.shell', function () {
             });
         });
     });
+
 
 });

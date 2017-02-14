@@ -854,14 +854,22 @@ spa_page_transition.data_bind = (function () {
 
         _replace_cloned_element_attr = function ($el, loop_prop_key, i) {
             $el.attr(BIND_ATTR_REPLACED_KEY, loop_prop_key);
-            _each_attr_type(function (bind_attr_type, attr_type) {
-                var
-                    bind_attr = $el.attr(bind_attr_type);
-
+            _each_attr_type(function (bind_attr_type) {
+                var bind_attr = $el.attr(bind_attr_type);
                 if (bind_attr) {
                     $el.attr(bind_attr_type, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
                 }
             });
+            $(all_show_cond_selectors).each(function (idx_any, el_any) {
+                $.each(SHOW_COND_SELECTORS, function (idx_selector, selector) {
+                    var bind_attr = $el.attr(selector);
+                    if (bind_attr) {
+                        $el.attr(selector, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
+                    }
+                });
+            });
+
+
         };
 
         /**
@@ -921,10 +929,9 @@ spa_page_transition.data_bind = (function () {
 
             _init_bind_prop_map(key, data);
             all_props = _get_all_prop_map();
-            bind_attr_type_selectors = _each_attr_type_selectors();
-
             _create_loop_element($('body'), data, key);
 
+            bind_attr_type_selectors = _each_attr_type_selectors();
             $(bind_attr_type_selectors).each(function (idx_bind, obj) {
                 var
                     el_prop_key,
@@ -976,7 +983,7 @@ spa_page_transition.data_bind = (function () {
                 },
                 prepare: function (data, attr) {
                     var
-                        entity_prop, _prop_tree, entity_prop_cond;
+                        entity_props, _entity_prop, entity_prop_cond;
                     this.prepared = true;
                     if (!data) {
                         console.warn('###invisible');
@@ -984,19 +991,20 @@ spa_page_transition.data_bind = (function () {
                     }
 
                     entity_prop_cond = attr.split('=');
-                    entity_prop = entity_prop_cond[0].split('\.');
-                    if (!entity_prop) {
-                        console.warn('###invisible entity_prop');
+                    entity_props = entity_prop_cond[0].split('\.');
+                    if (!entity_props) {
+                        console.warn('###invisible entity_props');
                         return;
                     }
-                    this.entity = entity_prop[0];
-                    _prop_tree = entity_prop[1];
-                    $.each(entity_prop, function (idx, el) {
-                        if (idx > 1) {
-                            _prop_tree += '.' + el;
+                    this.entity = entity_props[0];
+                    _entity_prop = '';
+                    $.each(entity_props, function (idx, el) {
+                        if (idx > 0) {
+                            _entity_prop += '.';
                         }
+                        _entity_prop += el;
                     });
-                    this.prop_tree = _prop_tree;
+                    this.entity_prop = _entity_prop;
                     if (entity_prop_cond.length > 1) {
                         this.cond = entity_prop_cond[1];
                     }
@@ -1043,7 +1051,7 @@ spa_page_transition.data_bind = (function () {
             createShowCondEq = function () {
                 var res = Object.create(showCondProto);
                 res.matches = function (data) {
-                    var val = data[this.prop_tree];
+                    var val = _get_bind_val(data, this.entity_prop);
                     if (!val) {
                         return false;
                     } else if (this.cond && this.cond !== val) {
@@ -1058,7 +1066,7 @@ spa_page_transition.data_bind = (function () {
             createShowCondEmpty = function () {
                 var res = Object.create(showCondProto);
                 res.matches = function (data) {
-                    var val = data[this.prop_tree];
+                    var val = _get_bind_val(data, this.entity_prop);
                     if (!val) {
                         return true;
                     } else if (typeof val === 'object') {
