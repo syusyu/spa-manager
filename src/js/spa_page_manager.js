@@ -949,6 +949,7 @@ spa_page_transition.data_bind = (function () {
                     }
                     if (all_props[el_prop_key]) {
                         _settle_bind_val($this, attr, data, el_prop_key);
+                        return false;
                     }
                 });
             });
@@ -967,6 +968,7 @@ spa_page_transition.data_bind = (function () {
                             } else {
                                 $(el).hide();
                             }
+                            return false;
                         }
                     }
                 });
