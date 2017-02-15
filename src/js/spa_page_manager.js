@@ -439,7 +439,7 @@ spa_page_transition.shell = (function () {
                 }
                 result += val ? ('"' + key + '":"' + val + '"') : '';
                 result += (result && idx < keys.length - 1 ? ',' : '');
-            })
+            });
             return JSON.parse('{' + result + '}');
         };
 
@@ -546,7 +546,7 @@ spa_page_transition.shell = (function () {
         var
             $show_target_page = $('.' + pageCls),
             $current_page = $(".spa-page:visible"),
-            all_matched = spa_page_util.exists($current_page) ? true : false;
+            all_matched = spa_page_util.exists($current_page);
 
         $current_page.each(function (idx, el) {
             all_matched &= $(el).hasClass(pageCls);
@@ -625,6 +625,7 @@ spa_page_transition.data_bind = (function () {
     var
         ENUM_TOGGLE_ACTION_TYPE = {ADD: 'ADD', REMOVE: 'REMOVE', TOGGLE: 'TOGGLE'},
         BIND_ATTR_REPLACED_KEY = 'data-bind-replaced-key',
+        BIND_ATTR_IS_CLONED = 'data-bind-is-cloned',
         evt_data_bind_view,
         run;
 
@@ -851,6 +852,7 @@ spa_page_transition.data_bind = (function () {
                 $(el).append($el_child);
             });
             $.each(clone_target_elements, function (idx, $el_child) {
+                $el_child.attr(BIND_ATTR_IS_CLONED, 'true');
                 $el_child.hide();
             });
 
@@ -963,7 +965,7 @@ spa_page_transition.data_bind = (function () {
                     if (attr_val) {
                         matched_show_cond = show_condition.findShowCond(selector).prepare(data, attr_val);
                         if (matched_show_cond.is_target(key)) {
-                            if (matched_show_cond.visible()) {
+                            if (matched_show_cond.visible() && $(el).attr(BIND_ATTR_IS_CLONED) !== 'true') {
                                 $(el).show();
                             } else {
                                 $(el).hide();
