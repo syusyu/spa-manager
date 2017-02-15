@@ -93,8 +93,9 @@
     {"year": "2016", "month": "11", "day": "5", "amount": "300M"}
   ],
   "history_filter_list" : [
-    {"year": "2017", "month": "1"},
+    {"year": "2017", "month": "1", "selected": "selected"},
     {"year": "2016", "month": "12"},
-    {"year": "2016", "month": "11"}
+    {"year": "2016", "month": "11"},
+    {"val_for_all": "all-all", "text_for_all": "Show all history"}
   ]
 }

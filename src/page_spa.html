@@ -32,32 +32,6 @@
             <p>プランを変更することができます。</p>
             <p>お申し込み後のキャンセルはできません。事前の注意事項をご確認の上、お手続きをお願いいたします。</p>
         </div>
-        <div data-bind-show-if-empty="HISTORY.history_list">
-            No history
-        </div>
-
-        <div data-bind-show-if-not-empty="HISTORY.history_list">
-            <table class="tbl_history">
-                <thead>
-                <tr>
-                    <th>Date</th><th>Amount</th><th>Month Nov</th>
-                </tr>
-                </thead>
-                <tbody data-bind-loop="HISTORY.history_list">
-                <tr>
-                    <td data-bind-text1="HISTORY.history_list.year" data-bind-text2="HISTORY.history_list.month"
-                        data-bind-text3="HISTORY.history_list.day" data-bind-text-separator="/"></td>
-                    <td data-bind-text="HISTORY.history_list.amount"></td>
-                    <td><span data-bind-show-if-eq="HISTORY.history_list.month=11" data-bind-text="HISTORY.history_list.month"></span></td>
-                </tr>
-                </tbody>
-            </table>
-
-            <select data-bind-loop="HISTORY_FILTER.history_filter_list" data-action-change-id="filter-history" data-action-change-params="val">
-                <option data-bind-text1="HISTORY_FILTER.history_filter_list.year" data-bind-text2="HISTORY_FILTER.history_filter_list.month" data-bind-text-separator="/"
-                        data-bind-val1="HISTORY_FILTER.history_filter_list.year" data-bind-val2="HISTORY_FILTER.history_filter_list.month" data-bind-val-separator="-"></option>
-            </select>
-        </div>
 
         <div class="box current-plan">
             <p>契約番号： 090-XXXX-XXX1</p>
@@ -227,6 +201,35 @@
         <div class="box new-plan-list">
             <p>契約番号： 090-XXXX-XXX2</p>
             <p>プラン： WonderLink LITE-A ミディアム (4G) + 500円</p>
+        </div>
+        <div data-bind-show-if-empty="HISTORY.history_list">
+            No history
+        </div>
+
+        <div data-bind-show-if-not-empty="HISTORY.history_list">
+            <table class="tbl_history">
+                <thead>
+                <tr>
+                    <th>Date</th><th>Amount</th>
+                </tr>
+                </thead>
+                <tbody data-bind-loop="HISTORY.history_list">
+                <tr>
+                    <td data-bind-text1="HISTORY.history_list.year" data-bind-text2="HISTORY.history_list.month"
+                        data-bind-text3="HISTORY.history_list.day" data-bind-text-separator="/"></td>
+                    <td data-bind-text="HISTORY.history_list.amount"></td>
+                </tr>
+                </tbody>
+            </table>
+
+            Filter date:
+            <select data-bind-loop="HISTORY_FILTER.history_filter_list" data-action-change-id="filter-history" data-action-change-params="val">
+                <option data-bind-text1="HISTORY_FILTER.history_filter_list.year" data-bind-text2="HISTORY_FILTER.history_filter_list.month"
+                        data-bind-text-separator="/" data-bind-text="HISTORY_FILTER.history_filter_list.text_for_all"
+                        data-bind-val1="HISTORY_FILTER.history_filter_list.year" data-bind-val2="HISTORY_FILTER.history_filter_list.month"
+                        data-bind-val-separator="-" data-bind-val="HISTORY_FILTER.history_filter_list.val_for_all"
+                        data-bind-selected="HISTORY_FILTER.history_filter_list.selected"></option>
+            </select>
         </div>
 
         <div class="plan-change-cancel-btn-area">

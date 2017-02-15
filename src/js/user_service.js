@@ -25,7 +25,7 @@ var plan_change = (function () {
                 plan_change.model.serverData.setPlanList(data.plan_list);
                 plan_change.model.serverData.initHistory(data);
                 observer.trigger('init_data', plan_change.model.serverData.getInitData());
-                observer.trigger('HISTORY', plan_change.model.serverData.getHistoryList());
+                observer.trigger('HISTORY',plan_change.model.serverData.filterHistoryList(plan_change.model.serverData.getFirstElementOfHistoryFilter()));
                 observer.trigger('HISTORY_FILTER', plan_change.model.serverData.getHistoryFilterList());
                 selectDefaultPlan.execute();
             }),
@@ -82,7 +82,7 @@ var plan_change = (function () {
             .addAction('update', 'complete', [updatePlan])
             .addAction('cancel-init', 'cancel')
             .addAction('cancel', 'cancel-complete', [cancelPlan])
-            .addAction('filter-history', 'list', [filterHistoryList])
+            .addAction('filter-history', 'cancel', [filterHistoryList])
             .addAction('popup-warning', 'warning')
             .run();
     };
@@ -165,8 +165,7 @@ plan_change.model = (function () {
             planList, getPlanList, setPlanList, findPlan,
             initData, getInitData, setInitData,
             initHistory, filterHistoryList,
-            history_list, getHistoryList,
-            history_filter_list, getHistoryFilterList;
+            history_list, history_filter_list, getHistoryFilterList, getFirstElementOfHistoryFilter;
 
         getInitData = function () {
             return initData;
@@ -196,11 +195,11 @@ plan_change.model = (function () {
             history_list = data.history_list;
             history_filter_list = data.history_filter_list;
         };
-        getHistoryList = function () {
-            return {'history_list': history_list};
-        };
         getHistoryFilterList = function () {
             return {'history_filter_list': history_filter_list};
+        };
+        getFirstElementOfHistoryFilter = function () {
+            return spa_page_util.isEmpty(history_filter_list) ? null : history_filter_list[0].year + '-' + history_filter_list[0].month;
         };
         filterHistoryList = function (selected_filter) {
             var
@@ -208,7 +207,7 @@ plan_change.model = (function () {
                 y = y_m[0],
                 m = y_m[1],
                 new_history_list = history_list.filter(function (el) {
-                    return el.year === y && el.month === m;
+                    return (y === 'all' || m === 'all') ? true : (el.year === y && el.month === m);
                 });
             return {'history_list': new_history_list};
         };
@@ -221,8 +220,8 @@ plan_change.model = (function () {
             setPlanList: setPlanList,
             findPlan: findPlan,
             initHistory: initHistory,
-            getHistoryList: getHistoryList,
             getHistoryFilterList: getHistoryFilterList,
+            getFirstElementOfHistoryFilter: getFirstElementOfHistoryFilter,
             filterHistoryList: filterHistoryList,
         }
     })();
