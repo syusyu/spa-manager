@@ -1246,6 +1246,10 @@ var spa_page_util = (function () {
         startsWith = function (str, prefix) {
             return str.indexOf(prefix) === 0;
         },
+        endsWith = function (str, suffix) {
+            var sub = str.length - suffix.length;
+            return (sub >= 0) && (str.lastIndexOf(suffix) === sub);
+        },
         contains = function (str, target) {
             return str.indexOf(target) != -1;
         };
@@ -1255,6 +1259,7 @@ var spa_page_util = (function () {
         isEmpty: isEmpty,
         isNotEmpty: isNotEmpty,
         startsWith: startsWith,
+        endsWith: endsWith,
         contains: contains,
     }
 })();
