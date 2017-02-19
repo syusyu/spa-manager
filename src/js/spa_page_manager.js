@@ -243,7 +243,7 @@ spa_page_transition.func = (function () {
             try {
                 this_obj.main_func(this_obj, anchor_map, data);
             } catch (e) {
-                console.error(e.message ? e.message : e, e);
+                spa_page_transition.getLogger().error(e);
                 return $.Deferred().reject(e.message ? {'err_mes': e.message} : e);
             }
             if (this_obj.stays) {
@@ -537,7 +537,7 @@ spa_page_transition.shell = (function () {
 
     renderErrorPage = function (data) {
         if (data && data.err_mes) {
-            console.warn(data.err_mes);
+            spa_page_transition.getLogger().warn(data.err_mes);
         }
         doRenderPage('spa-error');
     };
@@ -625,7 +625,6 @@ spa_page_transition.data_bind = (function () {
     var
         ENUM_TOGGLE_ACTION_TYPE = {ADD: 'ADD', REMOVE: 'REMOVE', TOGGLE: 'TOGGLE'},
         BIND_ATTR_REPLACED_KEY = 'data-bind-replaced-key',
-        BIND_ATTR_CLONE_TARGET = 'data-bind-clone-target',
         evt_data_bind_view,
         run;
 
@@ -693,12 +692,11 @@ spa_page_transition.data_bind = (function () {
         };
 
         _extract_val = function (data, key) {
-            var
-                val,
-                keys = key.split('\$');
-
-            val = keys.length > 1 ? data[keys[0]][keys[1]] : data[key];
-            return val;
+            var keys = key.split('\$');
+            if (!data) {
+                spa_page_transition.getLogger().warn('_extract_val.data is null...');
+            }
+            return keys.length > 1 ? data[keys[0]][keys[1]] : data[key];
         };
 
         /**
@@ -733,9 +731,9 @@ spa_page_transition.data_bind = (function () {
             if (bind_format === 'number') {
                 val = val.replace(/(\d)(?=(\d{3})+$)/g, '$1,');
             } else if (bind_format === 'date') {
-                console.warn('Not implemented yet.')
+                spa_page_transition.getLogger().warn('Not implemented yet.')
             } else {
-                console.error('Invalid bind_format:' + bind_format)
+                spa_page_transition.getLogger().error('Invalid bind_format:' + bind_format)
             }
             return _affix_bind_val(val, bind_affix);
         };
@@ -745,7 +743,7 @@ spa_page_transition.data_bind = (function () {
                 return val;
             }
             if (!spa_page_util.contains(affix, '#')) {
-                console.error('Put at least one # as a original value.');
+                spa_page_transition.getLogger().error('Put at least one # as a original value.');
             }
             return affix.replace(/#/g, val);
         };
@@ -857,10 +855,6 @@ spa_page_transition.data_bind = (function () {
                 $(el).append(el_child);
             });
             $.each(clone_target_elements, function (idx, $el_child) {
-                $el_child.attr(BIND_ATTR_CLONE_TARGET, 'TRUE');
-                $el_child.children().each(function (idx, el_grandchild) {
-                    $(el_grandchild).attr(BIND_ATTR_CLONE_TARGET, 'TRUE');
-                });
                 $el_child.hide();
             });
 
@@ -983,7 +977,7 @@ spa_page_transition.data_bind = (function () {
 
                     if (attr_val) {
                         matched_show_cond = show_condition.findShowCond(selector).prepare(data, attr_val);
-                        if (matched_show_cond.is_target(key) && $(el).attr(BIND_ATTR_CLONE_TARGET) !== 'TRUE') {
+                        if (matched_show_cond.is_target(key)) {
                             if (matched_show_cond.visible()) {
                                 $(el).show();
                             } else {
@@ -1014,14 +1008,14 @@ spa_page_transition.data_bind = (function () {
                         entity_props, _entity_prop, entity_prop_cond;
                     this.prepared = true;
                     if (!data) {
-                        console.warn('###invisible');
+                        spa_page_transition.getLogger().warn('###invisible');
                         return;
                     }
 
                     entity_prop_cond = attr.split('=');
                     entity_props = entity_prop_cond[0].split('\.');
                     if (!entity_props) {
-                        console.warn('###invisible entity_props');
+                        spa_page_transition.getLogger().warn('###invisible entity_props');
                         return;
                     }
                     this.entity = entity_props[0];
@@ -1040,13 +1034,17 @@ spa_page_transition.data_bind = (function () {
                     return this;
                 },
                 is_target: function (key) {
-                    return this.entity && key === this.entity;
+                    if (this.entity && key !== this.entity) {
+                        return false;
+                    }
+                    return !(!_get_all_prop_map()[this.entity_prop]);
                 },
                 visible: function () {
                     if (!this.prepared) {
                         throw new Error('Call prepare method before calling visible method!');
                     }
-                    return this.is_not ? !this.matches(this.data) : this.matches(this.data);
+                    this.val = _get_bind_val(this.data, this.entity_prop);
+                    return this.is_not ? !this.matches() : this.matches();
                 }
             };
 
@@ -1077,11 +1075,10 @@ spa_page_transition.data_bind = (function () {
 
             createShowCondEq = function () {
                 var res = Object.create(showCondProto);
-                res.matches = function (data) {
-                    var val = _get_bind_val(data, this.entity_prop);
-                    if (!val) {
+                res.matches = function () {
+                    if (!this.val) {
                         return false;
-                    } else if (this.cond && this.cond !== val) {
+                    } else if (this.cond && this.cond !== this.val) {
                         return false;
                     } else {
                         return true;
@@ -1092,14 +1089,13 @@ spa_page_transition.data_bind = (function () {
 
             createShowCondEmpty = function () {
                 var res = Object.create(showCondProto);
-                res.matches = function (data) {
-                    var val = _get_bind_val(data, this.entity_prop);
-                    if (!val) {
+                res.matches = function () {
+                    if (!this.val) {
                         return true;
-                    } else if (typeof val === 'object') {
-                        return spa_page_util.isEmpty(Object.keys(val));
+                    } else if (typeof this.val === 'object') {
+                        return spa_page_util.isEmpty(Object.keys(this.val));
                     } else {
-                        return spa_page_util.isEmpty(val);
+                        return spa_page_util.isEmpty(this.val);
                     }
                 };
                 return res;
@@ -1200,9 +1196,17 @@ var spa_log = (function () {
                 console.log(log);
             }
         },
-        error: function () {
+        warn: function () {
             var log = this.create_log(arguments);
             if (spa_page_util.isNotEmpty(log)) {
+                console.warn(log);
+            }
+        },
+        error: function () {
+            var log = this.create_log(arguments);
+            if (arguments && arguments.length == 1 && arguments[0] instanceof Object) {
+                console.error(arguments[0]);
+            } else if (spa_page_util.isNotEmpty(log)) {
                 console.error(log);
             }
         },
