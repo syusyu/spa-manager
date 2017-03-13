@@ -1024,7 +1024,7 @@ spa_page_transition.data_bind = (function () {
                         matched_show_cond;
 
                     if (attr_val) {
-                        matched_show_cond = show_condition.findShowCond(selector).prepare(data, attr_val);
+                        matched_show_cond = show_condition.findShowCond(selector).prepare(data, attr_val, _get_all_prop_map());
                         if (matched_show_cond.is_target(key)) {
                             if (matched_show_cond.visible()) {
                                 $(el).show();
@@ -1053,7 +1053,7 @@ spa_page_transition.data_bind = (function () {
                 set_not: function (_is_not) {
                     this.is_not = _is_not;
                 },
-                prepare: function (data, attr) {
+                prepare: function (data, attr, _all_prop_map) {
                     var
                         entity_props, _entity_prop, entity_prop_cond;
                     this.prepared = true;
@@ -1068,6 +1068,8 @@ spa_page_transition.data_bind = (function () {
                         spa_page_transition.getLogger().warn('###invisible entity_props');
                         return;
                     }
+
+                    this.all_prop_map = _all_prop_map;
                     this.entity = entity_props[0];
                     _entity_prop = '';
                     $.each(entity_props, function (idx, el) {
@@ -1123,15 +1125,21 @@ spa_page_transition.data_bind = (function () {
             createShowCondEq = function () {
                 var res = Object.create(showCondProto);
                 res.is_target = function () {
-                    return showCondProto.is_target.apply(this, arguments) && !(!_get_all_prop_map()[this.entity_prop]);
+                    // return showCondProto.is_target.apply(this, arguments) && !(!_get_all_prop_map()[this.entity_prop]);
+                    return showCondProto.is_target.apply(this, arguments) && !(!this.all_prop_map[this.entity_prop]);
                 };
                 res.matches = function () {
+                    // if (!this.val) {
+                    //     return false;
+                    // } else if (this.cond && this.cond !== this.val) {
+                    //     return false;
+                    // } else {
+                    //     return true;
+                    // }
                     if (!this.val) {
                         return false;
-                    } else if (this.cond && this.cond !== this.val) {
-                        return false;
                     } else {
-                        return true;
+                        return this.val && this.cond === this.val;
                     }
                 };
                 return res;

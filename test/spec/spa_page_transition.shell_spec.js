@@ -103,6 +103,19 @@ describe('TEST | spa_page_transition.shell', function () {
                     {'h22': '22'}
                 ]
             },
+            all_prop_maps = {
+                'bar': '1',
+                'baz': '2',
+                'list': [1, 2, 3],
+                'list_emp': [],
+                'map': {'1':1},
+                'map_emp': {},
+                'na': '',
+                'h1': [
+                    {'h21': '21'},
+                    {'h22': '22'}
+                ]
+            },
             fixtures = [
                 {'title': 'eq',     'selector': 'data-bind-show-if-eq',     'attr': 'FOO.bar=1',    'expected': true},
                 {'title': 'if',     'selector': 'data-bind-show-if',        'attr': 'FOO.bar=0',    'expected': false},
@@ -126,7 +139,7 @@ describe('TEST | spa_page_transition.shell', function () {
 
         $.each(fixtures, function (idx, f) {
             it('idx=' + idx + '-' + f.title, function () {
-                var matched_show_cond = sut.findShowCond(f.selector).prepare(data, f.attr);
+                var matched_show_cond = sut.findShowCond(f.selector).prepare(data, f.attr, all_prop_maps);
                 if (matched_show_cond.is_target('FOO')) {
                     expect(f.expected).toEqual(matched_show_cond.visible());
                 }
