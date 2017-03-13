@@ -1084,10 +1084,6 @@ spa_page_transition.data_bind = (function () {
                     return this;
                 },
                 is_target: function (key) {
-                    // if (this.entity && key !== this.entity) {
-                    //     return false;
-                    // }
-                    // return true;
                     return key && key === this.entity;
                 },
                 visible: function () {
