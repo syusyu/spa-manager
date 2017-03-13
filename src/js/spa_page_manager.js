@@ -299,7 +299,7 @@ spa_page_transition.func = (function () {
 
     createFunc = function (_main_func) {
         var
-            i, arg_main_func, res;
+            arg_main_func, res;
 
         arg_main_func = chooseArgByType(arguments, 'function');
         if (!arg_main_func) {
@@ -537,7 +537,7 @@ spa_page_transition.shell = (function () {
             renderPage(anchor_map);
         }, function (data) {
             if (data && data.stays) {
-                return;
+                return false;
             } else {
                 renderErrorPage(data);
             }
@@ -676,7 +676,7 @@ spa_page_transition.data_bind = (function () {
         _init_bind_prop_map = function (key, data) {
             $('[' + BIND_ATTR_REPLACED_KEY + ']').each(function (idx, el) {
                 var
-                    replaced_keys, replaced_key,
+                    replaced_keys,
                     replaced_key_str = $(el).attr(BIND_ATTR_REPLACED_KEY);
 
                 if (!replaced_key_str) {
@@ -743,7 +743,7 @@ spa_page_transition.data_bind = (function () {
          */
         _get_bind_val = function (data, key) {
             var
-                i, val, pure_key,
+                i, val,
                 keys = key.split('\.');
 
             if (keys.length < 2) {
@@ -921,17 +921,17 @@ spa_page_transition.data_bind = (function () {
 
             $el.attr(BIND_ATTR_REPLACED_KEY, loop_prop_key);
 
-            $(all_show_cond_selectors).each(function (idx_any, el_any) {
-                $.each(SHOW_COND_SELECTORS, function (idx_selector, selector) {
-                    var bind_attr = $el.attr(selector);
-                    if (bind_attr) {
-                        if (spa_page_util.contains(bind_attr, loop_prop_key + '$' + i)) {
-                            return true;
-                        }
-                        $el.attr(selector, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
-                        return false;
+            // $(all_show_cond_selectors).each(function (idx_any, el_any) {
+            // });
+            $.each(SHOW_COND_SELECTORS, function (idx_selector, selector) {
+                var bind_attr = $el.attr(selector);
+                if (bind_attr) {
+                    if (spa_page_util.contains(bind_attr, loop_prop_key + '$' + i)) {
+                        return true;
                     }
-                });
+                    $el.attr(selector, bind_attr.replace(loop_prop_key, loop_prop_key + '$' + i));
+                    return false;
+                }
             });
         };
 
@@ -1005,7 +1005,7 @@ spa_page_transition.data_bind = (function () {
             $(bind_attr_type_selectors).each(function (idx_bind, obj) {
                 var
                     el_prop_key,
-                    $this = $(this);
+                    $this = $(obj);
 
                 _each_attr_type(function (bind_attr, attr) {
                     el_prop_key = $this.attr(bind_attr);
@@ -1086,10 +1086,11 @@ spa_page_transition.data_bind = (function () {
                     return this;
                 },
                 is_target: function (key) {
-                    if (this.entity && key !== this.entity) {
-                        return false;
-                    }
-                    return true;
+                    // if (this.entity && key !== this.entity) {
+                    //     return false;
+                    // }
+                    // return true;
+                    return key && key === this.entity;
                 },
                 visible: function () {
                     if (!this.prepared) {
@@ -1188,8 +1189,7 @@ spa_page_transition.data_bind = (function () {
                 }
 
                 key += spa_page_util.contains(selector, '-not') ? '-not' : '';
-                var res = showCondMap[key];
-                return res;
+                return showCondMap[key];
             };
 
             return {
@@ -1284,11 +1284,11 @@ var spa_log = (function () {
         },
         create_log: function (logs) {
             var
-                log, i, is_left, is_right, is_last,
+                log, i, is_right, is_last,
                 result = '';
 
             if (logs.length < 1) {
-                console.error('No arguments...')
+                console.error('No arguments...');
                 return;
             }
 
