@@ -20,19 +20,6 @@ describe('TEST | spa_page_transition', function () {
             this_obj = this,
             data = null, data_main_func = null;
 
-        // console.log('### ajax execute start.');
-        // setTimeout(function(){
-        //     console.log('### ajax execute callback start.' + this_obj.exec_main_func(this_obj, anchor_map, data));
-        //     d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
-        //         console.log('### ajax execute callback done.');
-        //         return $.Deferred().resolve(data_main_func).promise();
-        //     }, function (data_main_func) {
-        //         console.log('### ajax execute callback fail.');
-        //         return $.Deferred().reject(data_main_func).promise();
-        //     });
-        //     console.log('### ajax execute callback end.');
-        // }, 10);
-        // console.log('### ajax execute end.');
         d.then(function (data) {
             d = this_obj.exec_main_func(this_obj, anchor_map, data).then(function (data_main_func) {
                 return $.Deferred().resolve(data_main_func).promise();
@@ -234,7 +221,7 @@ describe('TEST | spa_page_transition', function () {
 
         $.each(params, function (param_idx, obj) {
             it(obj.title + '(' + param_idx + ')', function () {
-                spa_page_transition.debugMode().initialize().addAction('action-01', 'dummy-cls', obj.func_list);
+                spa_page_transition.debugMode(true).unitTestMode(true).initialize().addAction('action-01', 'dummy-cls', obj.func_list);
                 spa_page_transition.model.execAction({'action': 'action-01', 'key': 'key01'}).then(function (data) {
                     page.renderPage(data);
                 }, function (data) {

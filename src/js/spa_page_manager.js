@@ -12,9 +12,10 @@
 var spa_page_transition = (function () {
     'use strict';
     var
-        addAction, createFunc, createAjaxFunc, initialize, debugMode, run, renderPage,
+        addAction, createFunc, createAjaxFunc, initialize, run, renderPage,
         spaLogger, getLogger,
-        isDebugMode;
+        isDebugMode, debugMode,
+        isUnitTestMode, unitTestMode;
 
     /**
      * Register function to be bound with action
@@ -55,6 +56,7 @@ var spa_page_transition = (function () {
     initialize = function (initialize_func) {
         spaLogger = spa_log.createLogger(isDebugMode, 'SPA.LOG ');
         spa_page_transition.model.initialize.apply(this, arguments);
+        spa_page_transition.func.setIsUnitTestMode(isUnitTestMode)
         return spa_page_transition;
     };
 
@@ -65,6 +67,11 @@ var spa_page_transition = (function () {
      */
     debugMode = function (is_debug_mode) {
         isDebugMode = is_debug_mode;
+        return spa_page_transition;
+    };
+
+    unitTestMode = function (is_unit_test_mode) {
+        isUnitTestMode = is_unit_test_mode;
         return spa_page_transition;
     };
 
@@ -111,6 +118,7 @@ var spa_page_transition = (function () {
         createFunc: createFunc,
         createAjaxFunc: createAjaxFunc,
         debugMode: debugMode,
+        unitTestMode: unitTestMode,
         initialize: initialize,
         run: run,
         renderPage: renderPage,
@@ -232,7 +240,8 @@ spa_page_transition.func = (function () {
     var
         protoFunc,
         chooseArgByType,
-        createFunc, createAjaxFunc;
+        createFunc, createAjaxFunc,
+        isUnitTestMode, setIsUnitTestMode;
 
     protoFunc = {
         execute: function (anchor_map) {
@@ -243,7 +252,11 @@ spa_page_transition.func = (function () {
             try {
                 this_obj.main_func(this_obj, anchor_map, data);
             } catch (e) {
-                spa_page_transition.getLogger().error(e);
+                if (isUnitTestMode) {
+                    spa_page_transition.getLogger().error('exec_main_func error (omitted by unit test)');
+                } else {
+                    spa_page_transition.getLogger().error(e);
+                }
                 return $.Deferred().reject(e.message ? {'err_mes': e.message} : e);
             }
             if (this_obj.stays) {
@@ -355,9 +368,14 @@ spa_page_transition.func = (function () {
         return res;
     };
 
+    setIsUnitTestMode = function (_is_unit_test_mode) {
+        isUnitTestMode = _is_unit_test_mode;
+    };
+
     return {
         createFunc: createFunc,
         createAjaxFunc: createAjaxFunc,
+        setIsUnitTestMode: setIsUnitTestMode,
     }
 })();
 
