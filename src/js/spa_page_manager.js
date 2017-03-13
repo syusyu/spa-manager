@@ -921,8 +921,6 @@ spa_page_transition.data_bind = (function () {
 
             $el.attr(BIND_ATTR_REPLACED_KEY, loop_prop_key);
 
-            // $(all_show_cond_selectors).each(function (idx_any, el_any) {
-            // });
             $.each(SHOW_COND_SELECTORS, function (idx_selector, selector) {
                 var bind_attr = $el.attr(selector);
                 if (bind_attr) {
