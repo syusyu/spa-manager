@@ -80,6 +80,9 @@ var spa_page_transition = (function () {
      * @param params: Optional. Pass map if necessary to use it in initilize func.
      */
     run = function (params) {
+        if (!spaLogger) {
+            spaLogger = spa_log.createLogger(isDebugMode, 'SPA.LOG ');
+        }
         spa_page_transition.data_bind.run();
         spa_page_transition.shell.run(params);
     };
@@ -711,6 +714,7 @@ spa_page_transition.data_bind = (function () {
                 var new_key = whole_key + "." + data_key;
 
                 if (data_val instanceof Array) {
+                    _bind_prop_map[new_key] = data_val;
                     $.each(data_val, function (ary_idx, ary_val) {
                         _create_bind_prop_map(new_key + '$' + ary_idx, ary_val);
                     });
@@ -1086,7 +1090,7 @@ spa_page_transition.data_bind = (function () {
                     return this;
                 },
                 is_target: function (key) {
-                    return key && key === this.entity;
+                    return key && key == this.entity;
                 },
                 visible: function () {
                     if (!this.prepared) {
@@ -1125,17 +1129,9 @@ spa_page_transition.data_bind = (function () {
             createShowCondEq = function () {
                 var res = Object.create(showCondProto);
                 res.is_target = function () {
-                    // return showCondProto.is_target.apply(this, arguments) && !(!_get_all_prop_map()[this.entity_prop]);
                     return showCondProto.is_target.apply(this, arguments) && !(!this.all_prop_map[this.entity_prop]);
                 };
                 res.matches = function () {
-                    // if (!this.val) {
-                    //     return false;
-                    // } else if (this.cond && this.cond !== this.val) {
-                    //     return false;
-                    // } else {
-                    //     return true;
-                    // }
                     if (!this.val) {
                         return false;
                     } else {
@@ -1154,7 +1150,7 @@ spa_page_transition.data_bind = (function () {
                     }
 
                     var found = false;
-                    var all_prop_map = _get_all_prop_map();
+                    var all_prop_map = this.all_prop_map;
                     var entity_prop = this.entity_prop;
                     $.each(all_prop_map, function (key, val) {
                         if (spa_page_util.startsWith(key, entity_prop)) {
